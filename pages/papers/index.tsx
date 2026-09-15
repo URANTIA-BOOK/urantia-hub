@@ -6,9 +6,11 @@ import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
+import ReadingLanguageNav from "@/components/ReadingLanguageNav";
 import { paperLabels } from "@/utils/paperLabels";
 import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useTranslatedToc } from "@/hooks/useTranslatedToc";
 
 // Define the structure of the data you expect from the API
 type TOCNode = {
@@ -28,9 +30,10 @@ type TOCPageProps = {
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
   // Hooks.
   const { status } = useSession();
+  const { nodes, loading: tocLoading } = useTranslatedToc(sourceNodes);
 
   // State.
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -174,10 +177,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                     <div className="flex flex-col">
                       <span
                         className="mt-1 text-xs text-gray-400 truncate w-full"
-                        title={paper.labels.sort().join(" | ")}
+                        title={(paper.labels ?? []).sort().join(" | ")}
                         dangerouslySetInnerHTML={{
                           __html: highlightActiveFilterLabels(
-                            paper.labels,
+                            paper.labels ?? [],
                             activeFilters
                           )
                             .sort()
@@ -217,10 +220,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                 </h3>
                 <span
                   className="text-xs text-gray-400 truncate"
-                  title={currentNode.labels.sort().join(" | ")}
+                  title={(currentNode.labels ?? []).sort().join(" | ")}
                   dangerouslySetInnerHTML={{
                     __html: highlightActiveFilterLabels(
-                      currentNode.labels,
+                      currentNode.labels ?? [],
                       activeFilters
                     )
                       .sort()
@@ -257,20 +260,16 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
       <Navbar />
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl">
-        {status === "loading" ? (
-          <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
-            <Spinner />
+        <div className="mt-4 mb-4 text-center">
+          <h1 className="text-5xl font-bold mb-4">The Urantia Papers</h1>
+          <div className="mb-8">
+            <ReadingLanguageNav />
           </div>
-        ) : (
-          <>
-            <div className="mt-4 mb-4 text-center">
-              <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
 
-              {/* -- All Papers --- */}
-              <h2 className="text-base pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                All Papers
-              </h2>
+          {/* -- All Papers --- */}
+          <h2 className="text-base pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
+            All Papers
+          </h2>
 
               {/* Render filter toggle buttons */}
               {showFilters ? (
@@ -313,11 +312,14 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               )}
             </div>
 
-            {/* Render parts and papers */}
-            {foreword && renderNode(foreword)}
-            {sortedNodes.map((node) => renderNode(node))}
-          </>
-        )}
+            {sourceNodes.length === 0 && tocLoading ? (
+              <Spinner />
+            ) : (
+              <>
+                {foreword && renderNode(foreword)}
+                {sortedNodes.map((node) => renderNode(node))}
+              </>
+            )}
       </main>
       <Footer />
     </div>

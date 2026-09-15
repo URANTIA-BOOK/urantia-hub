@@ -9,6 +9,7 @@ import type { AppProps } from "next/app";
 import type { NextComponentType, NextPageContext } from "next";
 // Relative modules.
 import { ThemeProvider } from "@/context/theme";
+import { ReadingLanguageProvider } from "@/context/readingLanguage";
 import "@/styles/globals.css";
 import SentryErrorBoundary from "@/components/SentryErrorBoundary";
 import { Toaster } from "sonner";
@@ -53,7 +54,9 @@ export default function App({
     <div className={googleFont.className}>
       <ThemeProvider>
         <SessionProvider session={session}>
-          <AppContent Component={Component} pageProps={pageProps} />
+          <ReadingLanguageProvider>
+            <AppContent Component={Component} pageProps={pageProps} />
+          </ReadingLanguageProvider>
         </SessionProvider>
       </ThemeProvider>
       {process.env.NODE_ENV !== "development" && <SpeedInsights />}

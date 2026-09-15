@@ -11,6 +11,7 @@ import UserService from "@/services/user";
 import getSessionDetails from "@/utils/getSessionDetails";
 import { withSentry } from "@/middleware/sentry";
 import createLogger from "@/utils/logger";
+import { isReaderLang } from "@/libs/readingLanguage";
 
 const logger = createLogger("api/user");
 
@@ -41,6 +42,7 @@ const handlePut = async (
     emailDailyQuoteEnabled,
     emailContinueReadingEnabled,
     emailChangelogEnabled,
+    readingLanguage,
   } = req.body;
 
   const updateData: Prisma.UserUpdateInput = {};
@@ -55,6 +57,12 @@ const handlePut = async (
   }
   if (emailChangelogEnabled !== undefined) {
     updateData.emailChangelogEnabled = emailChangelogEnabled;
+  }
+  if (readingLanguage !== undefined) {
+    if (!isReaderLang(readingLanguage)) {
+      return res.status(400).json({ error: "Invalid readingLanguage" });
+    }
+    updateData.readingLanguage = readingLanguage;
   }
 
   // Update the user's notification settings

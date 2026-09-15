@@ -48,23 +48,14 @@ import { useFontSize } from "@/hooks/useFontSize";
 import { useModals } from "@/hooks/useModals";
 import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
+import ReadingLanguageNav from "@/components/ReadingLanguageNav";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { isReaderLang } from "@/libs/readingLanguage";
 
 const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700"],
 });
-
-const READER_LANGS = [
-  { code: "eng", label: "English" },
-  { code: "es", label: "Español" },
-  { code: "fr", label: "Français" },
-  { code: "de", label: "Deutsch" },
-] as const;
-
-function paperLangHref(paperId: string, lang: string) {
-  const path = `/papers/${paperIdToUrl(paperId)}`;
-  return lang === "eng" ? path : `${path}?lang=${encodeURIComponent(lang)}`;
-}
 
 type PaperPageProps = {
   paperData: {
@@ -91,6 +82,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
   const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
+  const { language, ready: languageReady, setLanguage } = useReadingLanguage();
 
   const sourceNodes = paperData?.data?.results ?? [];
   const nodes = overlayNodes ?? sourceNodes;
@@ -99,23 +91,29 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   const firstNode = nodes[0] ?? sourceNodes[0];
   const paperId = firstNode?.paperId ?? "";
   const paperTitle = firstNode?.paperTitle ?? "";
-  const readerLang = !router.isReady
-    ? null
-    : typeof router.query.lang === "string" && router.query.lang
+  const urlLang =
+    router.isReady && typeof router.query.lang === "string"
       ? router.query.lang
-      : "eng";
+      : null;
   const langLoading =
-    readerLang === null || (readerLang !== "eng" && overlayNodes === null);
+    !languageReady || (language !== "eng" && overlayNodes === null);
 
   useEffect(() => {
-    if (!paperId || readerLang === null) return;
-    if (readerLang === "eng") {
+    if (!languageReady || !router.isReady) return;
+    if (isReaderLang(urlLang) && urlLang !== language) {
+      setLanguage(urlLang);
+    }
+  }, [language, languageReady, router.isReady, setLanguage, urlLang]);
+
+  useEffect(() => {
+    if (!paperId || !languageReady) return;
+    if (language === "eng") {
       setOverlayNodes(null);
       return;
     }
     let cancelled = false;
     setOverlayNodes(null);
-    fetchPaper(paperId, readerLang)
+    fetchPaper(paperId, language)
       .then((data) => {
         const results = data?.data?.results ?? [];
         results.forEach((node: UBNode) => {
@@ -128,13 +126,13 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
         if (!cancelled) setOverlayNodes(results);
       })
       .catch((error) => {
-        console.error(`[paper] overlay failed for lang=${readerLang}:`, error);
+        console.error(`[paper] overlay failed for lang=${language}:`, error);
         if (!cancelled) setOverlayNodes(paperData?.data?.results ?? []);
       });
     return () => {
       cancelled = true;
     };
-  }, [paperId, readerLang, paperData]);
+  }, [language, languageReady, paperData, paperId]);
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -462,24 +460,9 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
               {parseInt(node.paperId) > 0 ? node.paperId : "Foreword"}
             </h1>
             {paperId ? (
-              <nav
-                aria-label="Reading language"
-                className="flex justify-center gap-3 mb-6 text-sm"
-              >
-                {READER_LANGS.map((item) => (
-                  <Link
-                    key={item.code}
-                    href={paperLangHref(paperId, item.code)}
-                    className={
-                      readerLang === item.code
-                        ? "text-sky-600 dark:text-sky-400 font-medium"
-                        : "text-gray-400 hover:text-gray-600 hover:dark:text-white transition-all duration-300"
-                    }
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
+              <div className="mb-6">
+                <ReadingLanguageNav paperId={paperId} />
+              </div>
             ) : null}
 
             {/* Small - XL Screen TOC */}
@@ -971,7 +954,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={paperLangHref(`${nextPaperId}`, readerLang ?? "eng")}
+              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">

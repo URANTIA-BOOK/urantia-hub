@@ -9,6 +9,7 @@ import HeadTag from "@/components/HeadTag";
 import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 import { getPaperIdFromGlobalId } from "@/utils/node";
+import { useTranslatedToc } from "@/hooks/useTranslatedToc";
 
 // Define the structure of the data you expect from the API
 type TOCNode = {
@@ -47,9 +48,10 @@ type TOCPageProps = {
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
   // Hooks.
   const { status } = useSession();
+  const { nodes } = useTranslatedToc(sourceNodes);
 
   // Papers in progress.
   const [papersInProgress, setPapersInProgress] = useState<TOCNode[]>([]);

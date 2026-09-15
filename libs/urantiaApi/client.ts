@@ -33,8 +33,9 @@ function apiHost(): string | undefined {
  * Fetch the table of contents as a flat array of TOCNode objects
  * (compatible with the legacy format expected by pages/papers and pages/explore).
  */
-export async function fetchToc() {
-  const url = `${apiHost()}/toc`;
+export async function fetchToc(lang = "eng") {
+  const query = lang && lang !== "eng" ? `?lang=${encodeURIComponent(lang)}` : "";
+  const url = `${apiHost()}/toc${query}`;
   try {
     const res = await fetch(url);
     if (!res.ok) {
