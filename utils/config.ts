@@ -620,3 +620,8 @@ export const YOUTUBE_VIDEO_IDS: Record<string, string> = {};
 // Reading
 // ===========================
 export const AVERAGE_READING_SPEED = 400; // Words per minute
+
+// Open-source papers map (language trees + how they were made)
+// ===========================
+export const OPEN_SOURCE_PAPERS_URL =
+  "https://github.com/urantia-hub/urantia-data-sources/tree/main/languages";
