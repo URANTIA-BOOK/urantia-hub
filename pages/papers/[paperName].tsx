@@ -40,7 +40,7 @@ import {
   getValidPaperUrls,
   paperIdToUrl,
 } from "@/utils/paperFormatters";
-import { fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
 import type { ParagraphParallels } from "@/libs/urantiaApi/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -53,6 +53,18 @@ const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700"],
 });
+
+const READER_LANGS = [
+  { code: "eng", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+] as const;
+
+function paperLangHref(paperId: string, lang: string) {
+  const path = `/papers/${paperIdToUrl(paperId)}`;
+  return lang === "eng" ? path : `${path}?lang=${encodeURIComponent(lang)}`;
+}
 
 type PaperPageProps = {
   paperData: {
@@ -78,17 +90,51 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
+  const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
 
-  // Get the nodes from the paper data. Stay null-safe here: paperData can be
-  // undefined on a failed client-side navigation, and results can be empty when
-  // getStaticProps falls back after an API error. The real guard lives below,
-  // after all hooks have run (so we never call hooks conditionally).
-  const nodes = paperData?.data?.results ?? [];
+  const sourceNodes = paperData?.data?.results ?? [];
+  const nodes = overlayNodes ?? sourceNodes;
 
   // Get paper details.
-  const firstNode = nodes[0];
+  const firstNode = nodes[0] ?? sourceNodes[0];
   const paperId = firstNode?.paperId ?? "";
   const paperTitle = firstNode?.paperTitle ?? "";
+  const readerLang = !router.isReady
+    ? null
+    : typeof router.query.lang === "string" && router.query.lang
+      ? router.query.lang
+      : "eng";
+  const langLoading =
+    readerLang === null || (readerLang !== "eng" && overlayNodes === null);
+
+  useEffect(() => {
+    if (!paperId || readerLang === null) return;
+    if (readerLang === "eng") {
+      setOverlayNodes(null);
+      return;
+    }
+    let cancelled = false;
+    setOverlayNodes(null);
+    fetchPaper(paperId, readerLang)
+      .then((data) => {
+        const results = data?.data?.results ?? [];
+        results.forEach((node: UBNode) => {
+          if (PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]) {
+            node.mp3Url = `${
+              PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]
+            }${node.globalId}.mp3`;
+          }
+        });
+        if (!cancelled) setOverlayNodes(results);
+      })
+      .catch((error) => {
+        console.error(`[paper] overlay failed for lang=${readerLang}:`, error);
+        if (!cancelled) setOverlayNodes(paperData?.data?.results ?? []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [paperId, readerLang, paperData]);
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -361,7 +407,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
   // that getStaticProps returns when the upstream API call fails.
-  if (!nodes.length) {
+  if (!nodes.length || langLoading) {
     return <Spinner />;
   }
 
@@ -415,6 +461,26 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
             <h1 className="text-5xl font-bold mb-6" id={node.globalId}>
               {parseInt(node.paperId) > 0 ? node.paperId : "Foreword"}
             </h1>
+            {paperId ? (
+              <nav
+                aria-label="Reading language"
+                className="flex justify-center gap-3 mb-6 text-sm"
+              >
+                {READER_LANGS.map((item) => (
+                  <Link
+                    key={item.code}
+                    href={paperLangHref(paperId, item.code)}
+                    className={
+                      readerLang === item.code
+                        ? "text-sky-600 dark:text-sky-400 font-medium"
+                        : "text-gray-400 hover:text-gray-600 hover:dark:text-white transition-all duration-300"
+                    }
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
 
             {/* Small - XL Screen TOC */}
             <div className="flex flex-col items-left text-left xl:hidden mt-8">
@@ -905,7 +971,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
+              href={paperLangHref(`${nextPaperId}`, readerLang ?? "eng")}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">

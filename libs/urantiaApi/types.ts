@@ -16,6 +16,7 @@ export type ApiParagraph = {
   text: string;
   htmlText: string;
   labels: string[] | null;
+  language?: string;
   audio: Record<string, Record<string, { format: string; url: string }>> | null;
 };
 
