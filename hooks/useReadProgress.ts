@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import moment from "moment";
 import { ReadNode } from "@prisma/client";
+import { writeStoredLastVisited } from "@/libs/readingFlow";
 import { AVERAGE_READING_SPEED } from "@/utils/config";
 
 function throttle<T extends (...args: any[]) => any>(fn: T, ms: number): T {
@@ -79,7 +80,7 @@ export function useReadProgress(paperId: string, paperTitle: string, nodes: UBNo
     pid: string,
     title: string
   ) => {
-    localStorage.setItem("lastVisitedNode", JSON.stringify({ globalId, paperId: pid, paperTitle: title }));
+    writeStoredLastVisited({ globalId, paperId: pid, paperTitle: title });
     if (status !== "authenticated") return;
 
     try {
@@ -90,7 +91,7 @@ export function useReadProgress(paperId: string, paperTitle: string, nodes: UBNo
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const lastVisitedNode = await response.json();
-      localStorage.setItem("lastVisitedNode", JSON.stringify(lastVisitedNode));
+      writeStoredLastVisited(lastVisitedNode);
     } catch (error) {
       console.error("Error updating last visited node:", error);
     }

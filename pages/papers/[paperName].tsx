@@ -40,7 +40,7 @@ import {
   getValidPaperUrls,
   paperIdToUrl,
 } from "@/utils/paperFormatters";
-import { fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
 import type { ParagraphParallels } from "@/libs/urantiaApi/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -48,6 +48,10 @@ import { useFontSize } from "@/hooks/useFontSize";
 import { useModals } from "@/hooks/useModals";
 import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperPath } from "@/libs/readingFlow";
+import { isReaderLang } from "@/libs/readingLanguage";
+import { formatPaperLabel, formatPaperTitle, useUiCopy } from "@/libs/uiCopy";
 
 const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
@@ -66,6 +70,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Hooks.
   const router = useRouter();
   const { status } = useSession();
+  const copy = useUiCopy();
   const { isSupported, released, request, release } = useWakeLock({
     onRequest: () =>
       console.log(`[Screen Wake Lock]: Requested. Released: ${released}`),
@@ -78,17 +83,58 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
+  const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
+  const { language, ready: languageReady, setLanguage } = useReadingLanguage();
 
-  // Get the nodes from the paper data. Stay null-safe here: paperData can be
-  // undefined on a failed client-side navigation, and results can be empty when
-  // getStaticProps falls back after an API error. The real guard lives below,
-  // after all hooks have run (so we never call hooks conditionally).
-  const nodes = paperData?.data?.results ?? [];
+  const sourceNodes = paperData?.data?.results ?? [];
+  const nodes = overlayNodes ?? sourceNodes;
 
   // Get paper details.
-  const firstNode = nodes[0];
+  const firstNode = nodes[0] ?? sourceNodes[0];
   const paperId = firstNode?.paperId ?? "";
   const paperTitle = firstNode?.paperTitle ?? "";
+  const urlLang =
+    router.isReady && typeof router.query.lang === "string"
+      ? router.query.lang
+      : null;
+  const langLoading =
+    !languageReady || (language !== "eng" && overlayNodes === null);
+
+  useEffect(() => {
+    if (!languageReady || !router.isReady) return;
+    if (isReaderLang(urlLang) && urlLang !== language) {
+      setLanguage(urlLang);
+    }
+  }, [language, languageReady, router.isReady, setLanguage, urlLang]);
+
+  useEffect(() => {
+    if (!paperId || !languageReady) return;
+    if (language === "eng") {
+      setOverlayNodes(null);
+      return;
+    }
+    let cancelled = false;
+    setOverlayNodes(null);
+    fetchPaper(paperId, language)
+      .then((data) => {
+        const results = data?.data?.results ?? [];
+        results.forEach((node: UBNode) => {
+          if (PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]) {
+            node.mp3Url = `${
+              PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]
+            }${node.globalId}.mp3`;
+          }
+        });
+        if (!cancelled) setOverlayNodes(results);
+      })
+      .catch((error) => {
+        console.error(`[paper] overlay failed for lang=${language}:`, error);
+        if (!cancelled) setOverlayNodes(paperData?.data?.results ?? []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language, languageReady, paperData, paperId]);
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -361,7 +407,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
   // that getStaticProps returns when the upstream API call fails.
-  if (!nodes.length) {
+  if (!nodes.length || langLoading) {
     return <Spinner />;
   }
 
@@ -371,16 +417,12 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
       .map((node) => {
         switch (node.type) {
           case "paper": {
-            return `${
-              parseInt(paperId) > 0
-                ? `Paper ${paperId}: ${paperTitle}`
-                : "Foreword"
-            }\n`;
+            return `${formatPaperTitle(copy, paperId, paperTitle)}\n`;
           }
           case "section": {
             return node.sectionTitle
               ? `\n${node.sectionTitle}\n\n`
-              : `\nIntroduction\n\n`;
+              : `\n${copy.introduction}\n\n`;
           }
           case "paragraph": {
             return `(${node.standardReferenceId}) ${node.text}\n`;
@@ -393,7 +435,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     navigator.clipboard.writeText(paperTextWithNodes);
 
     // Show success toast.
-    toast.success("Paper copied to clipboard! 🎉");
+    toast.success(copy.paperCopied);
   };
 
   const renderNode = (node: UBNode) => {
@@ -413,7 +455,9 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
             {/* Paper Number */}
             <h1 className="text-5xl font-bold mb-6" id={node.globalId}>
-              {parseInt(node.paperId) > 0 ? node.paperId : "Foreword"}
+              {parseInt(node.paperId) > 0
+                ? node.paperId
+                : copy.forewordLabel}
             </h1>
 
             {/* Small - XL Screen TOC */}
@@ -426,7 +470,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
                 } text-sm flex items-center hover:text-gray-600 hover:dark:text-white transition-all duration-300 cursor-pointer`}
                 onClick={() => setTOCExpanded(!tocExpanded)}
               >
-                Table of Contents{" "}
+                {copy.tableOfContents}{" "}
                 <svg
                   className={`w-6 h-6 ${
                     tocExpanded ? "-rotate-90" : "rotate-90"
@@ -471,7 +515,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
         return (
           <div
-            className={`paragraph mb-2 text-left ${
+            className={`paragraph mb-2 ${
               currentPlayingNode &&
               isPlayingNode &&
               (isPlaying || isTransitioning)
@@ -624,7 +668,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
                 </div>
               </div>
               <div
-                className={`${getFontSizeClasses()} ${
+                className={`paragraph-body ${getFontSizeClasses()} ${
                   currentPlayingNode &&
                   !isPlayingNode &&
                   (isPlaying || isTransitioning)
@@ -699,7 +743,9 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
         if (options.skipPaperTitle) return null;
         return (
           <>
-            <p className="text-xs text-gray-400">Paper {paperId}</p>
+            <p className="text-xs text-gray-400">
+              {formatPaperLabel(copy, paperId)}
+            </p>
             <h2 className="m-0">{paperTitle}</h2>
           </>
         );
@@ -711,7 +757,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
               className="text-gray-400 hover:text-gray-600 hover:dark:text-white transition-all duration-300"
               href={node.sectionId === "0" ? "#" : `#${node.globalId}`}
             >
-              {node.sectionTitle || "Introduction"}
+              {node.sectionTitle || copy.introduction}
             </Link>
           </p>
         );
@@ -726,24 +772,16 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
-        metaDescription={`${
-          paperIdNumber > 0
-            ? `Urantia Paper ${paperId} - ${paperTitle}`
-            : "Urantia Papers Foreword"
-        } - ${paperData?.data?.results?.[2]?.text ?? ""}`}
-        titlePrefix={
-          paperIdNumber > 0 ? `Paper ${paperId} - ${paperTitle}` : "Foreword"
-        }
+        metaDescription={`${formatPaperTitle(copy, paperId, paperTitle)} - ${
+          paperData?.data?.results?.[2]?.text ?? ""
+        }`}
+        titlePrefix={formatPaperTitle(copy, paperId, paperTitle)}
         canonicalUrl={`https://www.urantiahub.com/papers/${paperIdToUrl(paperId)}`}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Article",
-          "name": paperIdNumber > 0 ? `Paper ${paperId} - ${paperTitle}` : "Foreword",
-          "description": `${
-            paperIdNumber > 0
-              ? `Urantia Paper ${paperId} - ${paperTitle}`
-              : "Urantia Papers Foreword"
-          } - ${paperData.data.results[2].text}`,
+          "name": formatPaperTitle(copy, paperId, paperTitle),
+          "description": `${formatPaperTitle(copy, paperId, paperTitle)} - ${paperData.data.results[2].text}`,
           "url": `https://www.urantiahub.com/papers/${paperIdToUrl(paperId)}`,
           "isPartOf": {
             "@type": "WebSite",
@@ -905,9 +943,9 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
+              href={paperPath(`${nextPaperId}`, undefined, language)}
             >
-              Next{" "}
+              {copy.nextPaper}{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"

@@ -9,6 +9,9 @@ import HeadTag from "@/components/HeadTag";
 import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 import { getPaperIdFromGlobalId } from "@/utils/node";
+import PaperMeta from "@/components/PaperMeta";
+import { fillUiCopy, useUiCopy } from "@/libs/uiCopy";
+import { useTranslatedToc } from "@/hooks/useTranslatedToc";
 
 // Define the structure of the data you expect from the API
 type TOCNode = {
@@ -47,9 +50,11 @@ type TOCPageProps = {
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
   // Hooks.
   const { status } = useSession();
+  const copy = useUiCopy();
+  const { nodes } = useTranslatedToc(sourceNodes);
 
   // Papers in progress.
   const [papersInProgress, setPapersInProgress] = useState<TOCNode[]>([]);
@@ -290,7 +295,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
         metaDescription="Explore the rich tapestry of wisdom within The Urantia Papers on UrantiaHub, discovering insights and teachings that resonate with you."
-        titlePrefix="Explore"
+        titlePrefix={copy.explore}
         canonicalUrl="https://www.urantiahub.com/explore"
       />
 
@@ -299,13 +304,13 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl min-h-screen">
         {status === "loading" ? (
           <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">Explore</h1>
+            <h1 className="text-5xl font-bold mb-8">{copy.explore}</h1>
             <Spinner />
           </div>
         ) : (
           <>
             <div className="mt-4 mb-4 text-center">
-              <h1 className="text-5xl font-bold mb-8">Explore</h1>
+              <h1 className="text-5xl font-bold mb-8">{copy.explore}</h1>
 
               {/* Featured Passages */}
               {!fetchingFeaturedQuotes && featuredQuotes?.length ? (
@@ -342,16 +347,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                             {/* Paper Info */}
                             <div className="flex flex-col w-full mb-2">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                {quote.paperId === "0" ? (
-                                  "Foreword"
-                                ) : (
-                                  <>
-                                    <span>Paper {quote.paperId}</span>
-                                    <span>
-                                      Part {quote.paragraphNode.partId}
-                                    </span>
-                                  </>
-                                )}
+                                <PaperMeta
+                                  paperId={quote.paperId}
+                                  partId={quote.paragraphNode.partId}
+                                />
                               </div>
                               <h3 className="mt-1 text-sm font-bold leading-5 text-gray-600 dark:text-white">
                                 {quote.paragraphNode.paperTitle}{" "}
@@ -422,14 +421,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                             <div className="flex flex-col w-full">
                               {/* Top Row */}
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                {paper.paperId === "0" ? (
-                                  "Foreword"
-                                ) : (
-                                  <>
-                                    <span>Paper {paper.paperId}</span>{" "}
-                                    <span>Part {paper.partId}</span>
-                                  </>
-                                )}
+                                <PaperMeta
+                                  paperId={`${paper.paperId}`}
+                                  partId={paper.partId}
+                                />
                               </div>
 
                               {/* Paper Title */}
@@ -492,14 +487,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                {paper.paperId === "0" ? (
-                                  "Foreword"
-                                ) : (
-                                  <>
-                                    <span>Paper {paper.paperId}</span>
-                                    <span>Part {paper.partId}</span>
-                                  </>
-                                )}
+                                <PaperMeta
+                                  paperId={`${paper.paperId}`}
+                                  partId={paper.partId}
+                                />
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -558,8 +549,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <PaperMeta
+                                  paperId={`${paper.paperId}`}
+                                  partId={paper.partId}
+                                />
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -618,8 +611,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <PaperMeta
+                                  paperId={`${paper.paperId}`}
+                                  partId={paper.partId}
+                                />
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -678,8 +673,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <PaperMeta
+                                  paperId={`${paper.paperId}`}
+                                  partId={paper.partId}
+                                />
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -728,7 +725,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                   return (
                     <div key={part.globalId} className="mb-8 fade-in">
                       <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                        Part {part.partId} Papers
+                        {fillUiCopy(copy.partPapers, { id: part.partId })}
                       </h2>
 
                       <p className="text-xs text-gray-400 mb-6">
@@ -752,8 +749,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                             >
                               <div className="flex flex-col w-full">
                                 <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                  <span>Paper {paper.paperId}</span>
-                                  <span>Part {paper.partId}</span>
+                                  <PaperMeta
+                                    paperId={`${paper.paperId}`}
+                                    partId={paper.partId}
+                                  />
                                 </div>
                                 <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                   {paper.paperTitle}

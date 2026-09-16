@@ -10,6 +10,7 @@ import {
   Brain,
   Palette,
 } from "lucide-react";
+import type { UiCopy } from "@/libs/uiCopy";
 
 export const FeatureCard = ({
   icon: Icon,
@@ -41,84 +42,86 @@ export const FeatureCard = ({
   </div>
 );
 
-// Update the modernFeatures array with gradient colors
-export const modernFeatures = [
-  {
-    icon: Smartphone,
-    title: "Read Anywhere",
-    description:
-      "Access the papers on any device with our responsive platform and offline capabilities.",
-    iconColor: "#007bff",
-  },
-  {
-    icon: Target,
-    title: "Pick Up Where You Left Off",
-    description:
-      "Continue reading exactly where you stopped last time, with automatic progress tracking across devices.",
-    iconColor: "#dc3545",
-  },
-  {
-    icon: Search,
-    title: "Enhanced Search",
-    description:
-      "Easily find specific papers or passages with our powerful search functionality.",
-    iconColor: "#ffc107",
-  },
-  {
-    icon: BarChart2,
-    title: "Progress Tracking",
-    description:
-      "Track your reading journey with completion percentages for each paper, making learning engaging and motivating.",
-    iconColor: "#ff9800",
-  },
-  {
-    icon: Bookmark,
-    title: "Smart Bookmarking",
-    description:
-      "Save your favorite passages for quick reference and see how many others found them meaningful.",
-    iconColor: "#28a745",
-  },
-  {
-    icon: PenTool,
-    title: "Personal Notes",
-    description:
-      "Create private notes on any passage to capture your thoughts and insights.",
-    iconColor: "#00bcd4",
-  },
-  {
-    icon: Headphones,
-    title: "Audio Experience",
-    description: (
-      <>
-        Listen to high-quality audio narration with text highlighting, or enjoy
-        the full papers on{" "}
-        <Link
-          href="https://open.spotify.com/show/7IDP6RsZbKtUjfEwLLHtuw?si=1fec0631594d45fb"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Spotify
-        </Link>
-        .
-      </>
-    ),
-    iconColor: "#007bff",
-  },
-  {
-    icon: Brain,
-    title: "AI-Powered Insights",
-    description:
-      "Get instant explanations and reflection questions for complex passages through our AI companion.",
-    iconColor: "#6610f2",
-  },
-  {
-    icon: Palette,
-    title: "Customizable Reading",
-    description:
-      "Personalize your reading experience with adjustable font sizes and light/dark mode themes.",
-    iconColor: "#ff9800",
-  },
-];
+export function modernFeaturesFrom(copy: UiCopy) {
+  return [
+    {
+      id: "anywhere",
+      icon: Smartphone,
+      title: copy.featureReadAnywhere,
+      description: copy.featureReadAnywhereBody,
+      iconColor: "#007bff",
+    },
+    {
+      id: "resume",
+      icon: Target,
+      title: copy.featureResume,
+      description: copy.featureResumeBody,
+      iconColor: "#dc3545",
+    },
+    {
+      id: "search",
+      icon: Search,
+      title: copy.featureSearch,
+      description: copy.featureSearchBody,
+      iconColor: "#ffc107",
+    },
+    {
+      id: "progress",
+      icon: BarChart2,
+      title: copy.featureProgress,
+      description: copy.featureProgressBody,
+      iconColor: "#ff9800",
+    },
+    {
+      id: "bookmarks",
+      icon: Bookmark,
+      title: copy.featureBookmarks,
+      description: copy.featureBookmarksBody,
+      iconColor: "#28a745",
+    },
+    {
+      id: "notes",
+      icon: PenTool,
+      title: copy.featureNotes,
+      description: copy.featureNotesBody,
+      iconColor: "#00bcd4",
+    },
+    {
+      id: "audio",
+      icon: Headphones,
+      title: copy.featureAudio,
+      description: (
+        <>
+          {copy.featureAudioLead}{" "}
+          <Link
+            href="https://open.spotify.com/show/7IDP6RsZbKtUjfEwLLHtuw?si=1fec0631594d45fb"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Spotify
+          </Link>
+          {copy.featureAudioTrail}
+        </>
+      ),
+      iconColor: "#007bff",
+    },
+    {
+      id: "ai",
+      icon: Brain,
+      title: copy.featureAi,
+      description: copy.featureAiBody,
+      iconColor: "#6610f2",
+    },
+    {
+      id: "customize",
+      icon: Palette,
+      title: copy.featureCustomize,
+      description: copy.featureCustomizeBody,
+      iconColor: "#ff9800",
+    },
+  ];
+}
+
 export default FeatureCard;

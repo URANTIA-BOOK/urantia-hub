@@ -2,9 +2,16 @@
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import NextAuth from "next-auth";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { Resend } from "resend";
 import type { Adapter } from "next-auth/adapters";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import {
+  AUTH_OFF_READ_HREF,
+  authOffNextAuthKind,
+  isAuthEnabled,
+  nextAuthAction,
+} from "@/libs/authEnabled";
 // Relative modules.
 import { getPrismaClient } from "@/libs/prisma/client";
 import {
@@ -15,7 +22,19 @@ import createLogger from "@/utils/logger";
 
 const logger = createLogger("auth");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function sendMagicLink(email: string, url: string) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    throw new Error("RESEND_API_KEY is not set");
+  }
+  return new Resend(key).emails.send({
+    from: process.env.EMAIL_FROM as string,
+    to: email,
+    subject: "Sign in to UrantiaHub",
+    html: getMagicLinkEmailHTML(url),
+    text: getMagicLinkEmailText(url),
+  });
+}
 
 const prisma = getPrismaClient();
 
@@ -27,13 +46,7 @@ export const authOptions = {
       sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
           logger.info("Sending magic link email", { email });
-          await resend.emails.send({
-            from: process.env.EMAIL_FROM as string,
-            to: email,
-            subject: "Sign in to UrantiaHub",
-            html: getMagicLinkEmailHTML(url),
-            text: getMagicLinkEmailText(url),
-          });
+          await sendMagicLink(email, url);
           logger.info("Magic link sent successfully");
         } catch (error: unknown) {
           logger.error("Error sending magic link email", error);
@@ -54,4 +67,28 @@ export const authOptions = {
   },
 };
 
-export default NextAuth(authOptions);
+const nextAuthHandler = NextAuth(authOptions);
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (!isAuthEnabled()) {
+    const kind = authOffNextAuthKind(nextAuthAction(req.query.nextauth));
+    if (kind === "session") {
+      res.status(200).json({});
+      return;
+    }
+    if (kind === "csrf") {
+      res.status(200).json({ csrfToken: "" });
+      return;
+    }
+    if (kind === "providers") {
+      res.status(200).json({});
+      return;
+    }
+    res.redirect(307, AUTH_OFF_READ_HREF);
+    return;
+  }
+  return nextAuthHandler(req, res);
+}

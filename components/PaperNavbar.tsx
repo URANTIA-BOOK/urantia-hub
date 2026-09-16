@@ -1,6 +1,8 @@
 // Node modules.
-import { paperIdToUrl } from "@/utils/paperFormatters";
 import Link from "next/link";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperPath } from "@/libs/readingFlow";
+import { formatPaperTitle, useUiCopy } from "@/libs/uiCopy";
 
 interface PaperNavbarProps {
   audioContent?: JSX.Element;
@@ -27,10 +29,15 @@ const PaperNavbar = ({
   setPlaybackRate,
   playbackRate,
 }: PaperNavbarProps) => {
+  const copy = useUiCopy();
+  const { language } = useReadingLanguage();
+
   if (paperId === undefined) return null;
   if (!paperTitle) return null;
 
   const playbackRates = ["0.5", "0.75", "1.0", "1.25", "1.5"];
+  const previousId = paperId - 1 === -1 ? "0" : `${paperId - 1}`;
+  const nextId = paperId + 1 <= 196 ? `${paperId + 1}` : "196";
 
   return (
     <div
@@ -44,11 +51,9 @@ const PaperNavbar = ({
           style={showAudio ? { maxWidth: "calc(100% - 48px)" } : {}}
         >
           <Link
-            aria-label="Previous paper"
+            aria-label={copy.previousPaper}
             className="px-2 py-2 text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(
-              paperId - 1 === -1 ? "0" : `${paperId - 1}`
-            )}`}
+            href={paperPath(previousId, undefined, language)}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -61,14 +66,12 @@ const PaperNavbar = ({
             className="flex-1 py-2 text-sm font-bold text-center whitespace-nowrap overflow-hidden text-ellipsis text-gray-600 hover:text-gray-600 dark:text-white hover:dark:text-white hover:no-underline transition duration-300 ease-in-out"
             href={`/papers#${paperId}`}
           >
-            {paperId > 0 ? `Paper ${paperId} - ${paperTitle}` : "Foreword"}
+            {formatPaperTitle(copy, String(paperId), paperTitle)}
           </Link>
           <Link
-            aria-label="Next paper"
+            aria-label={copy.nextPaperAria}
             className="px-2 py-2 flex text-right justify-end text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(
-              paperId + 1 <= 196 ? `${paperId + 1}` : "196"
-            )}`}
+            href={paperPath(nextId, undefined, language)}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path

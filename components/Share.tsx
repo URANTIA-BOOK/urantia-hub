@@ -6,6 +6,7 @@ import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { renderLeadingText } from "@/utils/renderNode";
 import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useUiCopy } from "@/libs/uiCopy";
 
 const constructShareUrl = (node: UBNode) => {
   // Replace this with actual URL construction logic
@@ -20,14 +21,14 @@ type ShareProps = {
 };
 
 const Share = ({ onClose, node }: ShareProps) => {
-  // State.
+  const copy = useUiCopy();
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Create links.
   const shareUrl = node ? constructShareUrl(node) : "";
   const shareText = node
     ? `"${node.text?.trim()}"\n\nUrantia ${renderLeadingText(
-        node as UBNodeLeadingTextProps
+        node as UBNodeLeadingTextProps,
+        copy
       )}\n`
     : "";
 
@@ -42,7 +43,7 @@ const Share = ({ onClose, node }: ShareProps) => {
               <div className="leading-relaxed border-l-4 border-gray-200 dark:border-gray-500 pl-3 pb-1 mb-4">
                 <div className="flex items-center justify-between mb-2 text-gray-400 dark:text-gray-500 text-xs">
                   <span>
-                    {renderLeadingText(node as UBNodeLeadingTextProps)}
+                    {renderLeadingText(node as UBNodeLeadingTextProps, copy)}
                   </span>
                 </div>
                 <div

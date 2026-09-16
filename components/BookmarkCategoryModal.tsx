@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { renderLeadingText } from "@/utils/renderNode";
+import { useUiCopy } from "@/libs/uiCopy";
 import { Bookmark } from "@prisma/client";
 import { BookmarkIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ const BookmarkCategoryModal = ({
   bookmark,
   onCategorySelect,
 }: BookmarkCategoryModalProps) => {
-  // State
+  const copy = useUiCopy();
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingNew, setCreatingNew] = useState<boolean>(false);
@@ -73,7 +74,9 @@ const BookmarkCategoryModal = ({
           <>
             <div className="leading-relaxed border-l-4 border-gray-200 dark:border-gray-500 pl-3 pb-1 mb-4">
               <div className="flex items-center justify-between mb-2 text-gray-400 dark:text-gray-500 text-xs">
-                <span>{renderLeadingText(node as UBNodeLeadingTextProps)}</span>
+                <span>
+                  {renderLeadingText(node as UBNodeLeadingTextProps, copy)}
+                </span>
               </div>
               <div
                 className="max-h-96 overflow-y-auto text-gray-600 dark:text-white text-base"

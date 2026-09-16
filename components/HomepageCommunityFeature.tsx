@@ -8,6 +8,7 @@ export type CommunityFeature = {
 
 export const CommunityFeature = ({
   comingSoon,
+  comingSoonLabel,
   icon: Icon,
   title,
   description,
@@ -21,7 +22,7 @@ export const CommunityFeature = ({
         className="absolute top-2 md:top-3 -right-5 md:right-3 px-3 py-1 bg-orange-500 text-white text-sm font-medium rounded-full
       shadow-lg shadow-emerald-500/20 rotate-12 md:rotate-0"
       >
-        COMING SOON
+        {comingSoonLabel}
       </div>
     )}
 

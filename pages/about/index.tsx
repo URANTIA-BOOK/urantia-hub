@@ -2,6 +2,7 @@
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import Navbar from "@/components/Navbar";
+import { OPEN_SOURCE_PAPERS_URL } from "@/utils/config";
 
 const About = () => {
   return (
@@ -93,7 +94,7 @@ const About = () => {
             <p>
               We publish our paper data and audio as{" "}
               <a
-                href="https://github.com/urantia-hub/data"
+                href={OPEN_SOURCE_PAPERS_URL}
                 className="text-blue-400 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"

@@ -1,9 +1,11 @@
-const renderNode = (node: UBNode) => {
+import { formatPaperLabel, getUiCopy, type UiCopy } from "@/libs/uiCopy";
+
+const renderNode = (node: UBNode, copy: UiCopy = getUiCopy("eng")) => {
   switch (node.type) {
     case "paper": {
       return (
         <div key={node.globalId} className="mb-12 text-center">
-          <p className="text-xl mb-2">Paper {node.paperId}</p>
+          <p className="text-xl mb-2">{formatPaperLabel(copy, node.paperId)}</p>
           <h1 className="text-4xl font-bold mb-12" id={node.globalId}>
             {node.paperTitle}
           </h1>
@@ -38,30 +40,38 @@ const renderNode = (node: UBNode) => {
   }
 };
 
-export const renderLeadingPaperText = (result: {
-  paperId: string;
-  paperTitle: string;
-}) => {
+export const renderLeadingPaperText = (
+  result: {
+    paperId: string;
+    paperTitle: string;
+  },
+  copy: UiCopy = getUiCopy("eng")
+) => {
   if (parseInt(result.paperId) > 0) {
-    return `Paper ${result.paperId}: ${result.paperTitle}`;
-  } else {
-    return "Foreword";
+    return `${formatPaperLabel(copy, result.paperId)}: ${result.paperTitle}`;
   }
+  return copy.forewordLabel;
 };
 
-export const renderLeadingSectionText = (result: {
-  sectionId: string;
-  sectionTitle: string;
-}) => {
+export const renderLeadingSectionText = (
+  result: {
+    sectionId: string;
+    sectionTitle: string;
+  },
+  copy: UiCopy = getUiCopy("eng")
+) => {
   if (parseInt(result.sectionId) > 0) {
     return result.sectionTitle;
-  } else {
-    return "Introduction";
   }
+  return copy.introduction;
 };
 
-export const renderLeadingText = (result: UBNodeLeadingTextProps) => {
-  return `${renderLeadingPaperText(result)} - ${renderLeadingSectionText(
-    result
+export const renderLeadingText = (
+  result: UBNodeLeadingTextProps,
+  copy: UiCopy = getUiCopy("eng")
+) => {
+  return `${renderLeadingPaperText(result, copy)} - ${renderLeadingSectionText(
+    result,
+    copy
   )} (${result.standardReferenceId})`;
 };
