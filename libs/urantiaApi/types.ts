@@ -16,6 +16,7 @@ export type ApiParagraph = {
   text: string;
   htmlText: string;
   labels: string[] | null;
+  language?: string;
   audio: Record<string, Record<string, { format: string; url: string }>> | null;
 };
 
@@ -39,6 +40,17 @@ export type ApiTocResponse = {
   data: {
     parts: ApiTocPart[];
   };
+};
+
+export type ApiLanguage = {
+  code: string;
+  name: string;
+  entityCount: number;
+  paragraphCount: number;
+};
+
+export type ApiLanguagesResponse = {
+  data: ApiLanguage[];
 };
 
 // GET /papers/{id} response
