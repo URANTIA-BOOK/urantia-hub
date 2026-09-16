@@ -29,6 +29,10 @@ const nextConfig = {
     return [
       {
         source: "/(.*)",
+        // With i18n, Next prefixes the source with the locale, and the result
+        // fails to match the bare locale root "/en". locale: false matches the
+        // incoming path literally, so the homepage gets these headers too.
+        locale: false,
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
