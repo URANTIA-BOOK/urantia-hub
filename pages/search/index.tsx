@@ -10,11 +10,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useUiCopy } from "@/libs/uiCopy";
 
 const Search = () => {
   // Router.
   const { data: session } = useSession();
   const router = useRouter();
+  const copy = useUiCopy();
 
   // State.
   const [query, setQuery] = useState<string>("");
@@ -186,7 +188,7 @@ const Search = () => {
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
         metaDescription="Utilize UrantiaHub's search feature to find specific teachings, papers, or topics within The Urantia Papers, aiding your study and exploration."
-        titlePrefix="Search"
+        titlePrefix={copy.search}
         canonicalUrl="https://www.urantiahub.com/search"
       />
 
@@ -194,7 +196,7 @@ const Search = () => {
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-3xl paper-content min-h-screen">
         <h1 className="text-2xl md:text-4xl dark:text-white font-bold mb-8 text-center">
-          Search the Urantia Papers
+          {copy.searchHeading}
         </h1>
         <div className="relative flex items-center w-full mb-6 pb-2">
           <input
@@ -203,7 +205,7 @@ const Search = () => {
             id="search"
             onChange={handleSearchInput}
             onKeyDown={handleKeyPress}
-            placeholder="Search..."
+            placeholder={copy.searchPlaceholder}
             type="text"
             value={query}
           />
@@ -357,7 +359,7 @@ const Search = () => {
             >
               <div className="leading-relaxed">
                 <div className="flex flex-col block mb-1 text-gray-400 text-xs">
-                  <span>{renderLeadingText(result)}</span>
+                  <span>{renderLeadingText(result, copy)}</span>
                 </div>
                 <div
                   className="leading-tight max-h-96 overflow-y-auto text-gray-600 dark:text-white"

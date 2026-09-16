@@ -26,6 +26,14 @@ function cleanup() {
 
 // Rate limit configuration by path prefix
 function getRateLimit(pathname: string): { limit: number; windowMs: number } | null {
+  // SessionProvider polls these; they must not share the sign-in bucket.
+  if (
+    pathname.startsWith("/api/auth/session") ||
+    pathname.startsWith("/api/auth/csrf") ||
+    pathname.startsWith("/api/auth/providers")
+  ) {
+    return { limit: 60, windowMs: 60_000 };
+  }
   if (pathname.startsWith("/api/auth")) {
     return { limit: 5, windowMs: 60_000 };
   }

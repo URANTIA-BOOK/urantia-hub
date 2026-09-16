@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/Modal";
 import Spinner from "./Spinner";
 import { renderLeadingText } from "@/utils/renderNode";
+import { useUiCopy } from "@/libs/uiCopy";
 
 const CHAR_LIMIT = 1000;
 
@@ -13,6 +14,7 @@ type NoteProps = {
 };
 
 const Note = ({ onClose, node }: NoteProps) => {
+  const copy = useUiCopy();
   // Network states.
   const [creating, setCreating] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -82,7 +84,9 @@ const Note = ({ onClose, node }: NoteProps) => {
             {/* Leading text */}
             <div className="leading-relaxed border-l-4 border-gray-200 dark:border-gray-500 pl-3 mb-4 pb-1">
               <div className="flex items-center justify-between mb-2 text-gray-400 dark:text-gray-500 text-xs">
-                <span>{renderLeadingText(node as UBNodeLeadingTextProps)}</span>
+                <span>
+                  {renderLeadingText(node as UBNodeLeadingTextProps, copy)}
+                </span>
               </div>
               <div
                 className="max-h-96 overflow-y-auto text-gray-600 dark:text-gray-500 text-base isolated-quote"

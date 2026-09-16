@@ -2,74 +2,51 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { User } from "@prisma/client";
 // Relative modules.
+import { isAuthEnabled } from "@/libs/authEnabled";
+import { resolveReadRedirect } from "@/libs/readingFlow";
 import getSessionDetails from "@/utils/getSessionDetails";
-import { paperIdToUrl } from "@/utils/paperFormatters";
-import { withSentry } from "@/middleware/sentry";
 
 const TEMPORARY_REDIRECT = 307;
 
-const redirectToPaper = (
-  res: NextApiResponse,
-  paperId?: string | null,
-  globalId?: string | null
-) => {
-  // Default to the explore page.
-  if (!paperId && !globalId) {
-    res.redirect(TEMPORARY_REDIRECT, "/explore");
-    return;
-  }
+const firstQuery = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
 
-  // If only 1 of the 2 is provided, 400.
-  if ((paperId && !globalId) || (!paperId && globalId)) {
-    res
-      .status(400)
-      .end(`Invalid query parameters, must provide both paperId and globalId`);
-    return;
-  }
-
-  // Redirect to the paper.
-  res.redirect(
-    TEMPORARY_REDIRECT,
-    `/papers/${paperIdToUrl(`${paperId}`)}#${globalId}`
-  );
-};
-
-// Handle GET method.
-const handleGet = async (
+const handleGet = (
   req: NextApiRequest,
   res: NextApiResponse,
   user?: User
 ) => {
-  // If unauthorized, use req.query if provided (e.g. they stored last visited node in localStorage).
-  if (!user?.lastVisitedGlobalId) {
-    return redirectToPaper(
-      res,
-      req.query.paperId as string,
-      req.query.globalId as string
-    );
-  }
-
-  // If authorized, derive the last visited node from the User.
-  return redirectToPaper(
-    res,
-    user.lastVisitedPaperId,
-    user.lastVisitedGlobalId
-  );
+  const href = resolveReadRedirect({
+    paperId: firstQuery(req.query.paperId),
+    globalId: firstQuery(req.query.globalId),
+    language: firstQuery(req.query.lang),
+    lastVisitedPaperId: user?.lastVisitedPaperId,
+    lastVisitedGlobalId: user?.lastVisitedGlobalId,
+  });
+  res.redirect(TEMPORARY_REDIRECT, href);
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const sessionDetails = await getSessionDetails(req, res, {
-    skipUnauthorized: true,
-  });
+  let user: User | undefined;
+  if (isAuthEnabled()) {
+    try {
+      const sessionDetails = await getSessionDetails(req, res, {
+        skipUnauthorized: true,
+      });
+      user = sessionDetails?.user;
+    } catch {
+      user = undefined;
+    }
+  }
 
   const { method } = req;
   switch (method) {
     case "GET":
-      return handleGet(req, res, sessionDetails?.user);
+      return handleGet(req, res, user);
     default:
       res.setHeader("Allow", ["GET"]);
       res.status(405).end(`Method ${method} Not Allowed`);
   }
 }
 
-export default withSentry(handler);
+export default handler;

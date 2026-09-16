@@ -6,6 +6,7 @@ import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 import { renderLeadingText } from "@/utils/renderNode";
+import { useUiCopy } from "@/libs/uiCopy";
 import type {
   ApiBibleParallel,
   ApiUrantiaParallel,
@@ -37,6 +38,7 @@ const RelatedWorks = ({
   loading,
   error,
 }: RelatedWorksProps) => {
+  const copy = useUiCopy();
   const [activeTab, setActiveTab] = useState<TabId>("urantia");
   // Per-card "Read more" toggles, keyed by parallel id (chunkId for Bible, id for UB).
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -63,7 +65,7 @@ const RelatedWorks = ({
         {node && (
           <div className="leading-relaxed border-l-4 border-gray-200 dark:border-gray-500 pl-3 pb-1 mb-3">
             <div className="mb-1 text-gray-400 dark:text-gray-500 text-xs">
-              {renderLeadingText(node as UBNodeLeadingTextProps)}
+              {renderLeadingText(node as UBNodeLeadingTextProps, copy)}
             </div>
             <p className="max-h-32 overflow-y-auto text-gray-600 dark:text-white text-sm m-0">
               {node.text}

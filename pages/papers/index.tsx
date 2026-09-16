@@ -8,7 +8,15 @@ import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import { paperLabels } from "@/utils/paperLabels";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { paperPath } from "@/libs/readingFlow";
+import {
+  fillUiCopy,
+  formatPaperLabel,
+  formatPartHeading,
+  useUiCopy,
+} from "@/libs/uiCopy";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { useTranslatedToc } from "@/hooks/useTranslatedToc";
 
 // Define the structure of the data you expect from the API
 type TOCNode = {
@@ -28,9 +36,12 @@ type TOCPageProps = {
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
   // Hooks.
   const { status } = useSession();
+  const { language } = useReadingLanguage();
+  const copy = useUiCopy();
+  const { nodes, loading: tocLoading } = useTranslatedToc(sourceNodes);
 
   // State.
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -143,8 +154,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
         return (
           <div key={currentNode.globalId} className="mb-8">
             <h2 className="text-xs mb-6 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-              Part {currentNode.partId}:{" "}
-              {currentNode.partTitle || `Part ${currentNode.partId}`}
+              {formatPartHeading(
+                copy,
+                currentNode.partId,
+                currentNode.partTitle
+              )}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {papers.map((paper) => {
@@ -156,12 +170,12 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                 return (
                   <Link
                     className="relative flex flex-col justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                    href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                    href={paperPath(`${paper.paperId}`, undefined, language)}
                     key={paper.globalId}
                   >
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-400">
-                        Paper {paper.paperId}
+                        {formatPaperLabel(copy, `${paper.paperId}`)}
                       </span>
                       <h3
                         className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white"
@@ -174,10 +188,10 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                     <div className="flex flex-col">
                       <span
                         className="mt-1 text-xs text-gray-400 truncate w-full"
-                        title={paper.labels.sort().join(" | ")}
+                        title={(paper.labels ?? []).sort().join(" | ")}
                         dangerouslySetInnerHTML={{
                           __html: highlightActiveFilterLabels(
-                            paper.labels,
+                            paper.labels ?? [],
                             activeFilters
                           )
                             .sort()
@@ -209,18 +223,20 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
               <Link
                 className="relative block px-4 py-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                href={`/papers/${paperIdToUrl(`${currentNode.paperId}`)}`}
+                href={paperPath(`${currentNode.paperId}`, undefined, language)}
               >
-                <span className="text-xs text-gray-400">Foreword</span>
+                <span className="text-xs text-gray-400">
+                  {copy.forewordLabel}
+                </span>
                 <h3 className="text-lg font-bold text-gray-600 dark:text-white">
                   {currentNode.paperTitle}
                 </h3>
                 <span
                   className="text-xs text-gray-400 truncate"
-                  title={currentNode.labels.sort().join(" | ")}
+                  title={(currentNode.labels ?? []).sort().join(" | ")}
                   dangerouslySetInnerHTML={{
                     __html: highlightActiveFilterLabels(
-                      currentNode.labels,
+                      currentNode.labels ?? [],
                       activeFilters
                     )
                       .sort()
@@ -250,27 +266,19 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
         metaDescription="Find the Urantia Papers that resonate with you on UrantiaHub. With 197 papers, there is a wealth of wisdom to explore."
-        titlePrefix="Papers"
+        titlePrefix={copy.papers}
         canonicalUrl="https://www.urantiahub.com/papers"
       />
 
       <Navbar />
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl">
-        {status === "loading" ? (
-          <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
-            <Spinner />
-          </div>
-        ) : (
-          <>
-            <div className="mt-4 mb-4 text-center">
-              <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
+        <div className="mt-4 mb-4 text-center">
+          <h1 className="text-5xl font-bold mb-4">{copy.heroTitle}</h1>
 
-              {/* -- All Papers --- */}
-              <h2 className="text-base pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                All Papers
-              </h2>
+          <h2 className="text-base pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
+            {copy.allPapers}
+          </h2>
 
               {/* Render filter toggle buttons */}
               {showFilters ? (
@@ -282,12 +290,12 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                       setActiveFilters([]);
                     }}
                   >
-                    Hide Filters
+                    {copy.hideFilters}
                   </button>
                   <div className="flex flex-wrap gap-2 mt-4 mb-4">
                     {paperLabels.map((label) => (
                       <button
-                        aria-label={`Filter by ${label}`}
+                        aria-label={fillUiCopy(copy.filterByLabel, { label })}
                         key={label}
                         className={`px-3 py-1 rounded text-sm md:text-xs font-semibold ${
                           activeFilters.includes(label)
@@ -307,17 +315,20 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                     className="px-3 py-1 rounded text-sm md:text-xs font-semibold bg-white text-gray-400 dark:bg-neutral-600 dark:text-neutral-300 border-0 shadow-lg"
                     onClick={() => setShowFilters(true)}
                   >
-                    Filter by Topics
+                    {copy.filterByTopics}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Render parts and papers */}
-            {foreword && renderNode(foreword)}
-            {sortedNodes.map((node) => renderNode(node))}
-          </>
-        )}
+            {sourceNodes.length === 0 && tocLoading ? (
+              <Spinner />
+            ) : (
+              <>
+                {foreword && renderNode(foreword)}
+                {sortedNodes.map((node) => renderNode(node))}
+              </>
+            )}
       </main>
       <Footer />
     </div>

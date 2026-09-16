@@ -22,7 +22,7 @@ export function mapParagraphToUBNode(p: ApiParagraph): UBNode {
     paperSectionId: `${p.paperId}.${p.sectionId ?? "0"}`,
     paperSectionParagraphId: `${p.paperId}.${p.sectionId ?? "0"}.${p.paragraphId}`,
     labels: p.labels ?? [],
-    language: "eng",
+    language: p.language ?? "eng",
     type: "paragraph",
     objectID: p.id,
   };
