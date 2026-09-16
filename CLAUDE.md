@@ -49,6 +49,46 @@ public mirror and its security scanning stale. Keep the histories identical
 points at a dead database (every preview build failed with P1017 until
 2026-08-18). Previews build and render; they never migrate.
 
+### hideSourceMaps does not stop the .map files shipping
+
+`hideSourceMaps: true` in `next.config.js` only strips the
+`//# sourceMappingURL=` comment from the bundle. The `.map` files still deploy.
+Append `.map` to any chunk name in the page HTML and you get the file. On
+2026-09-15 the admin curated-quotes map served 13,908 bytes of original
+TypeScript with `sourcesContent: true`.
+
+`sourcemaps.deleteSourcemapsAfterUpload: true` is the fix and is now set. Maps
+still upload to Sentry first, so stack traces stay readable — the build log
+must show `Uploaded files to Sentry` plus a per-chunk debug ID. Verify by
+fetching a `.map` URL and seeing 404. Do not trust the config alone.
+
+### headers() skips the bare locale root
+
+With `i18n` configured, Next prefixes each `headers()` source with the locale,
+and the result never matches the bare `/en`. On 2026-09-15 the homepage shipped
+with no `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, or
+`Permissions-Policy`, while `/en/about`, `/en/papers`, and every `/api/*` route
+had all four. `locale: false` on the header entry matches the path literally
+and fixes it.
+
+Test the locale root as its own case. A list of "pages" hides this, because
+every page except the root passes.
+
+**Do not blame Cloudflare first.** `www.urantiahub.com` sits behind Cloudflare,
+so a missing header looks like CDN stripping. The origin was missing it too.
+Bypass with `vercel curl` against the deployment URL — a plain request to the
+`*.vercel.app` URL is not enough, because Vercel SSO answers with a 302 whose
+headers belong to the SSO layer, not the app.
+
+### Firewall: block-credential-probes
+
+A published Vercel firewall rule denies paths containing `/.env`, `/.git`,
+`%2egit`, `%2eenv`, `/.aws`, `/.azure`, `.tfstate`, and `xmlrpc.php`. It exists
+because a credential-harvesting scanner hit the site through 2026-09-15 using
+percent-encoded dots to dodge path filters. If a legitimate path ever returns
+an unexplained 403, check this rule first:
+`vercel firewall rules inspect block-credential-probes`.
+
 ### Specialized Scripts
 ```bash
 npm run screenshots              # Generate screenshots for community resources
@@ -224,6 +264,8 @@ These pins are deliberate — do not "upgrade" them without checking the reason:
 - `@testing-library/jest-dom` exact `6.9.1` — 6.10.0 is a botched release that requires Node 22; this machine builds on Node 20.
 - `resolutions` block forces patched transitive versions (axios, follow-redirects, postcss, sharp, rollup) that parent packages pin too low. Keep the block when regenerating the lockfile.
 - `nodemailer` looks unused (Resend sends the emails) but next-auth's EmailProvider imports it at module load, so it must stay a dependency.
+- `puppeteer` stays on `^22.6.0`. Its `extract-zip` dependency carries two open high alerts with no patched version. The fix only lands in `@puppeteer/browsers` 3.x, which ships with puppeteer 25 and needs Node >= 22.12. Revisit with the Node 22 move, alongside the other Node 20 pins. `@puppeteer/browsers` 2.13.2 still pulls `extract-zip`, so a 24.x bump clears nothing.
+- `uuid` 9.0.1 (via `@sentry/webpack-plugin`) and `@opentelemetry/core` 1.30.1 each hold one open medium alert. Both are pinned by `@sentry/*` 8 peer ranges; they move when Sentry goes to 9. Do not force them with `resolutions`.
 
 ## Known Technical Debt
 
