@@ -81,6 +81,13 @@ module.exports = withSentryConfig(nextConfig, {
   // Hides source maps from generated client bundles
   hideSourceMaps: true,
 
+  // Upload source maps to Sentry, then delete them from the build output so
+  // they are never served publicly. hideSourceMaps only strips the
+  // sourceMappingURL comment; the .map files still ship without this.
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 
