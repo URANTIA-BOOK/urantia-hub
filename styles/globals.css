@@ -293,6 +293,19 @@ select.select-selected {
   margin-bottom: 0;
 }
 
+/* Paper reader: flush left and right edges. The last line stays start-aligned. */
+.paper-content .paragraph-body {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.paper-content .paragraph-body > span {
+  display: block;
+}
+
 .urantia-dev-py-4 {
   display: block;
   margin-bottom: 2rem;
