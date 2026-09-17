@@ -1,0 +1,24 @@
+{
+  "name": "urantia-hub",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile",
+    "target": "dev"
+  },
+  "workspaceFolder": "/app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+  "forwardPorts": [3001],
+  "remoteEnv": {
+    "NEXT_PUBLIC_HOST": "http://localhost:3001",
+    "NEXT_PUBLIC_URANTIA_DEV_API_HOST": "http://localhost:3000",
+    "NEXTAUTH_URL": "http://localhost:3001",
+    "PORT": "3001",
+    "HOSTNAME": "0.0.0.0"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["prisma.prisma"]
+    }
+  },
+  "postCreateCommand": "corepack enable && yarn install --frozen-lockfile && npx prisma generate"
+}
