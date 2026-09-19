@@ -388,6 +388,10 @@ npm run dev                   # Starts on http://localhost:3001
 
 Set `NEXT_PUBLIC_URANTIA_DEV_API_HOST` in `.env` to `https://api.urantia.dev` (or `http://localhost:3000` if running urantia-dev-api locally).
 
+The `Dockerfile` is the versioned image (`yarn start`). `NEXT_PUBLIC_*` are
+build args. Open `.devcontainer` to onboard the module; the lab conductor
+builds this image and does not bind-mount hub source in prod.
+
 ---
 
 ## Environment Variables
