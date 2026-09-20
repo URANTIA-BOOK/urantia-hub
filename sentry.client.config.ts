@@ -8,8 +8,10 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Only a Vercel deployment reports. Local runs and forks of this public repo
-  // set no VERCEL_ENV, so their errors never reach this project.
-  enabled: !!process.env.VERCEL_ENV,
+  // set no VERCEL_ENV, so their errors never reach this project. The client
+  // needs the NEXT_PUBLIC_ copy: Next.js inlines only those into browser code,
+  // so the bare VERCEL_ENV reads as undefined here and disables reporting.
+  enabled: !!process.env.NEXT_PUBLIC_VERCEL_ENV,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
@@ -37,9 +39,8 @@ Sentry.init({
     /extensions\//i,
   ],
 
-  // Symbols that exist in no bundle we ship, plus well-known browser noise.
+  // Well-known browser noise.
   ignoreErrors: [
-    /READER_LANGS is not defined/,
     /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/,
     /Non-Error promise rejection captured/,
     /^Java(script)? exception/i,
