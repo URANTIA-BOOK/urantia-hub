@@ -73,27 +73,31 @@ const Navbar = ({
 
   return (
     <>
-      <ReadingLanguageNav
-        paperId={paperId === undefined ? undefined : String(paperId)}
-        variant="fab"
-      />
       <header
         className={`flex flex-col items-center pt-2 pb-1 px-2 fixed bottom-0 left-0 right-0 z-10 bg-white dark:bg-neutral-800 dark:border-t dark:border-neutral-700 mx-auto dark:shadow-none shadow ${
           hidden ? "translate-y-16" : "translate-y-0"
         } transition-transform duration-300 ease-in-out`}
       >
-        <PaperNavbar
-          audioContent={audioContent}
-          audioOnPlay={audioOnPlay}
-          audioIsPlaying={audioIsPlaying}
-          paperId={paperId}
-          paperTitle={paperTitle}
-          showAudio={showAudio}
-          skipToNextParagraph={skipToNextParagraph}
-          skipToPreviousParagraph={skipToPreviousParagraph}
-          setPlaybackRate={setPlaybackRate}
-          playbackRate={playbackRate}
-        />
+        <div className="mb-6 mt-1 flex w-full max-w-3xl items-center gap-2">
+          <ReadingLanguageNav
+            paperId={paperId === undefined ? undefined : String(paperId)}
+            variant="fab"
+          />
+          <div className="min-w-0 flex-1">
+            <PaperNavbar
+              audioContent={audioContent}
+              audioOnPlay={audioOnPlay}
+              audioIsPlaying={audioIsPlaying}
+              paperId={paperId}
+              paperTitle={paperTitle}
+              showAudio={showAudio}
+              skipToNextParagraph={skipToNextParagraph}
+              skipToPreviousParagraph={skipToPreviousParagraph}
+              setPlaybackRate={setPlaybackRate}
+              playbackRate={playbackRate}
+            />
+          </div>
+        </div>
 
         <div className="flex items-center justify-around w-full max-w-sm pt-1 pb-2">
           <Link
