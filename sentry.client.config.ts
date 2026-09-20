@@ -37,9 +37,8 @@ Sentry.init({
     /extensions\//i,
   ],
 
-  // Symbols that exist in no bundle we ship, plus well-known browser noise.
+  // Well-known browser noise.
   ignoreErrors: [
-    /READER_LANGS is not defined/,
     /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/,
     /Non-Error promise rejection captured/,
     /^Java(script)? exception/i,
