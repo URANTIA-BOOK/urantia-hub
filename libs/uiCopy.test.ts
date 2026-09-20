@@ -5,6 +5,7 @@ import {
   formatPaperTitle,
   formatPartHeading,
   getUiCopy,
+  hasUiCopy,
   localeKeys,
 } from "./uiCopy";
 
@@ -47,6 +48,8 @@ describe("uiCopy", () => {
   });
 
   it("falls back to English for an unknown code", () => {
-    expect(getUiCopy("eng").read).toBe("Read");
+    expect(hasUiCopy("es")).toBe(true);
+    expect(hasUiCopy("ar")).toBe(false);
+    expect(getUiCopy("ar").heroTitle).toBe(getUiCopy("eng").heroTitle);
   });
 });

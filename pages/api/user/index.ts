@@ -11,7 +11,7 @@ import UserService from "@/services/user";
 import getSessionDetails from "@/utils/getSessionDetails";
 import { withSentry } from "@/middleware/sentry";
 import createLogger from "@/utils/logger";
-import { isReaderLang } from "@/libs/readingLanguage";
+import { isLanguageCode } from "@/libs/readingLanguage";
 
 const logger = createLogger("api/user");
 
@@ -59,7 +59,7 @@ const handlePut = async (
     updateData.emailChangelogEnabled = emailChangelogEnabled;
   }
   if (readingLanguage !== undefined) {
-    if (!isReaderLang(readingLanguage)) {
+    if (!isLanguageCode(readingLanguage)) {
       return res.status(400).json({ error: "Invalid readingLanguage" });
     }
     updateData.readingLanguage = readingLanguage;

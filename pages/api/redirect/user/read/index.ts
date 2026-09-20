@@ -20,6 +20,7 @@ const handleGet = (
     paperId: firstQuery(req.query.paperId),
     globalId: firstQuery(req.query.globalId),
     language: firstQuery(req.query.lang),
+    source: firstQuery(req.query.source),
     lastVisitedPaperId: user?.lastVisitedPaperId,
     lastVisitedGlobalId: user?.lastVisitedGlobalId,
   });

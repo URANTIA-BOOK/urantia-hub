@@ -1,6 +1,7 @@
 // Node modules.
 import { XIcon } from "lucide-react";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 type ModalProps = {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ type ModalProps = {
   showNavigation?: boolean;
 };
 
-const Modal = ({ children, onClose }: ModalProps): JSX.Element => {
+const Modal = ({ children, onClose }: ModalProps): JSX.Element | null => {
   // Close the modal when the user presses the escape key.
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -33,13 +34,15 @@ const Modal = ({ children, onClose }: ModalProps): JSX.Element => {
     };
   }, []);
 
-  return (
-    <aside className="fixed z-20 flex items-center justify-center top-0 left-0 right-0 bottom-0 p-4 h-full w-full">
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <aside className="fixed z-[60] flex items-center justify-center top-0 left-0 right-0 bottom-0 p-4 h-full w-full">
       <div
         className="h-full w-full absolute bg-slate-200/50 dark:bg-zinc-900/50 backdrop-filter backdrop-blur-sm mix-blend-normal"
         onClick={onClose}
       />
-      <div className="relative flex flex-col rounded max-h-full max-w-3xl w-full bg-white dark:bg-zinc-800 shadow-lg">
+      <div className="relative flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded bg-white shadow-lg dark:bg-zinc-800">
         {children}
         {onClose && (
           <button
@@ -51,7 +54,8 @@ const Modal = ({ children, onClose }: ModalProps): JSX.Element => {
           </button>
         )}
       </div>
-    </aside>
+    </aside>,
+    document.body,
   );
 };
 

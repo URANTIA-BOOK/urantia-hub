@@ -9,29 +9,61 @@ import React, {
 } from "react";
 import {
   detectNavigatorLanguage,
-  isReaderLang,
+  htmlLangAttr,
+  isLanguageCode,
   readStoredReadingLanguage,
+  readStoredReadingSource,
+  resolveSourceId,
   writeStoredReadingLanguage,
-  type ReaderLang,
+  writeStoredReadingSource,
+  ENGLISH_LANG,
+  type ReaderLangOption,
 } from "@/libs/readingLanguage";
 import { fetchLanguages } from "@/libs/urantiaApi/client";
-import { READER_LANGS } from "@/libs/readingLanguage";
-
-type ReaderLangOption = (typeof READER_LANGS)[number];
 
 type ReadingLanguageContextValue = {
-  language: ReaderLang;
+  language: string;
+  source: string | null;
   ready: boolean;
   availableLangs: readonly ReaderLangOption[];
-  setLanguage: (language: ReaderLang) => void;
+  setLanguage: (language: string, sourceId?: string | null) => void;
 };
 
 const ReadingLanguageContext = createContext<ReadingLanguageContextValue>({
   language: "eng",
+  source: null,
   ready: false,
-  availableLangs: READER_LANGS,
+  availableLangs: [ENGLISH_LANG],
   setLanguage: () => {},
 });
+
+function optionsFromApi(
+  langs: Awaited<ReturnType<typeof fetchLanguages>>
+): ReaderLangOption[] {
+  return langs
+    .filter((item) => item.code === "eng" || item.paragraphCount > 0)
+    .map((item) => ({
+      code: item.code,
+      slug: item.slug,
+      bcp47: item.bcp47,
+      label: item.uiLabel || item.name,
+      uiLabelEnglish: item.uiLabelEnglish,
+      sources: (item.sources ?? [])
+        .filter((source) => item.code === "eng" || source.paragraphCount > 0)
+        .map((source) => ({
+        id: source.id,
+        treeSlug: source.treeSlug,
+        editionEnglish: source.editionEnglish,
+        editionNative: source.editionNative,
+        bookTitle: source.bookTitle,
+        regionCode: source.regionCode,
+        versionNumber: source.versionNumber,
+        firstPublished: source.firstPublished,
+        copyrightYear: source.copyrightYear,
+        isPrimary: source.isPrimary,
+      })),
+    }));
+}
 
 export const ReadingLanguageProvider = ({
   children,
@@ -39,20 +71,21 @@ export const ReadingLanguageProvider = ({
   children: React.ReactNode;
 }) => {
   const { status } = useSession();
-  const [language, setLanguageState] = useState<ReaderLang>("eng");
+  const [language, setLanguageState] = useState("eng");
+  const [source, setSourceState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [availableLangs, setAvailableLangs] =
-    useState<readonly ReaderLangOption[]>(READER_LANGS);
+  const [availableLangs, setAvailableLangs] = useState<
+    readonly ReaderLangOption[]
+  >([ENGLISH_LANG]);
   const accountSynced = useRef(false);
 
   useEffect(() => {
     const stored = readStoredReadingLanguage();
-    const detected = detectNavigatorLanguage();
+    const storedSource = readStoredReadingSource();
     if (stored) setLanguageState(stored);
-    else if (detected) setLanguageState(detected);
+    if (storedSource) setSourceState(storedSource);
     setReady(true);
-    const htmlLang = (stored ?? detected ?? "eng") === "eng" ? "en" : stored ?? detected;
-    if (htmlLang) document.documentElement.lang = htmlLang;
+    document.documentElement.lang = htmlLangAttr(stored ?? "eng");
   }, []);
 
   useEffect(() => {
@@ -60,15 +93,28 @@ export const ReadingLanguageProvider = ({
     fetchLanguages()
       .then((langs) => {
         if (cancelled) return;
-        const live = new Set(
-          langs
-            .filter((item) => item.code === "eng" || item.paragraphCount > 0)
-            .map((item) => item.code)
-        );
-        setAvailableLangs(READER_LANGS.filter((item) => live.has(item.code)));
+        const options = optionsFromApi(langs);
+        const next = options.length ? options : [ENGLISH_LANG];
+        setAvailableLangs(next);
+        const stored = readStoredReadingLanguage();
+        const storedSource = readStoredReadingSource();
+        const detected = detectNavigatorLanguage(next);
+        const codes = new Set(next.map((item) => item.code));
+        if (stored && codes.has(stored)) {
+          setLanguageState(stored);
+          setSourceState(resolveSourceId(next, stored, storedSource));
+          return;
+        }
+        if (detected && codes.has(detected)) {
+          setLanguageState(detected);
+          const nextSource = resolveSourceId(next, detected);
+          setSourceState(nextSource);
+          writeStoredReadingLanguage(detected);
+          writeStoredReadingSource(nextSource);
+        }
       })
       .catch(() => {
-        if (!cancelled) setAvailableLangs(READER_LANGS);
+        if (!cancelled) setAvailableLangs([ENGLISH_LANG]);
       });
     return () => {
       cancelled = true;
@@ -78,8 +124,9 @@ export const ReadingLanguageProvider = ({
   useEffect(() => {
     if (!ready) return;
     writeStoredReadingLanguage(language);
-    document.documentElement.lang = language === "eng" ? "en" : language;
-  }, [language, ready]);
+    writeStoredReadingSource(source);
+    document.documentElement.lang = htmlLangAttr(language, availableLangs);
+  }, [language, source, ready, availableLangs]);
 
   useEffect(() => {
     if (!ready || status !== "authenticated" || accountSynced.current) return;
@@ -89,9 +136,18 @@ export const ReadingLanguageProvider = ({
       .then((user) => {
         if (cancelled || !user) return;
         accountSynced.current = true;
-        if (isReaderLang(user.readingLanguage)) {
-          setLanguageState(user.readingLanguage);
-          writeStoredReadingLanguage(user.readingLanguage);
+        const preferred = user.readingLanguage;
+        const codes = new Set(availableLangs.map((item) => item.code));
+        if (isLanguageCode(preferred) && codes.has(preferred)) {
+          setLanguageState(preferred);
+          writeStoredReadingLanguage(preferred);
+          const nextSource = resolveSourceId(
+            availableLangs,
+            preferred,
+            readStoredReadingSource()
+          );
+          setSourceState(nextSource);
+          writeStoredReadingSource(nextSource);
           return;
         }
         const stored = readStoredReadingLanguage() ?? language;
@@ -107,14 +163,20 @@ export const ReadingLanguageProvider = ({
     return () => {
       cancelled = true;
     };
-  }, [language, ready, status]);
+  }, [language, ready, status, availableLangs]);
 
   const setLanguage = useCallback(
-    (next: ReaderLang) => {
+    (next: string, sourceId?: string | null) => {
+      const nextSource = resolveSourceId(availableLangs, next, sourceId);
       setLanguageState((current) => {
         if (current === next) return current;
         writeStoredReadingLanguage(next);
         return next;
+      });
+      setSourceState((current) => {
+        if (current === nextSource) return current;
+        writeStoredReadingSource(nextSource);
+        return nextSource;
       });
       if (status === "authenticated") {
         fetch("/api/user", {
@@ -126,12 +188,12 @@ export const ReadingLanguageProvider = ({
         });
       }
     },
-    [status]
+    [availableLangs, status]
   );
 
   return (
     <ReadingLanguageContext.Provider
-      value={{ language, ready, availableLangs, setLanguage }}
+      value={{ language, source, ready, availableLangs, setLanguage }}
     >
       {children}
     </ReadingLanguageContext.Provider>

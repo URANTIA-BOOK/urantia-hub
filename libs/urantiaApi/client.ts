@@ -5,6 +5,7 @@
  * using raw fetch/axios with hardcoded endpoint paths.
  */
 
+import { overlaySearch } from "@/libs/readingLanguage";
 import {
   mapParagraphToUBNode,
   mapSearchResult,
@@ -38,8 +39,8 @@ function apiHost(): string | undefined {
  */
 const TOC_FETCH: RequestInit = { cache: "no-store" };
 
-export async function fetchToc(lang = "eng") {
-  const query = lang && lang !== "eng" ? `?lang=${encodeURIComponent(lang)}` : "";
+export async function fetchToc(lang = "eng", source?: string | null) {
+  const query = overlaySearch(lang, source);
   const url = `${apiHost()}/toc${query}`;
   try {
     const res = await fetch(url, TOC_FETCH);
@@ -54,8 +55,11 @@ export async function fetchToc(lang = "eng") {
   }
 }
 
-export async function fetchTocParts(lang = "eng"): Promise<ApiTocPart[]> {
-  const query = lang && lang !== "eng" ? `?lang=${encodeURIComponent(lang)}` : "";
+export async function fetchTocParts(
+  lang = "eng",
+  source?: string | null
+): Promise<ApiTocPart[]> {
+  const query = overlaySearch(lang, source);
   const url = `${apiHost()}/toc${query}`;
   const res = await fetch(url, TOC_FETCH);
   if (!res.ok) {
@@ -67,7 +71,7 @@ export async function fetchTocParts(lang = "eng"): Promise<ApiTocPart[]> {
 
 export async function fetchLanguages(): Promise<ApiLanguage[]> {
   const url = `${apiHost()}/languages`;
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch languages: ${res.status} ${res.statusText}`);
   }
@@ -80,8 +84,12 @@ export async function fetchLanguages(): Promise<ApiLanguage[]> {
  * The result is wrapped in the legacy `{ data: { results: UBNode[] } }` shape
  * to match what the paper reader page expects.
  */
-export async function fetchPaper(paperId: string, lang = "eng") {
-  const query = lang && lang !== "eng" ? `?lang=${encodeURIComponent(lang)}` : "";
+export async function fetchPaper(
+  paperId: string,
+  lang = "eng",
+  source?: string | null
+) {
+  const query = overlaySearch(lang, source);
   const url = `${apiHost()}/papers/${paperId}${query}`;
   try {
     const res = await fetch(url);

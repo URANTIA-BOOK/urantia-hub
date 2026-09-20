@@ -15,7 +15,12 @@ import { useReadingFlow } from "@/context/readingFlow";
 import { useReadingLanguage } from "@/context/readingLanguage";
 import { isAuthEnabled } from "@/libs/authEnabled";
 import { paperPath } from "@/libs/readingFlow";
-import { fillUiCopy, useUiCopy } from "@/libs/uiCopy";
+import {
+  isLanguageCode,
+  isSourceId,
+  resolveSource,
+} from "@/libs/readingLanguage";
+import { fillUiCopy, hasUiCopy, useUiCopy } from "@/libs/uiCopy";
 import { fetchTocParts } from "@/libs/urantiaApi/client";
 import type { ApiTocPart } from "@/libs/urantiaApi/types";
 import {
@@ -41,17 +46,34 @@ type HomePageProps = {
 const HomePage = ({ parts: initialParts = [] }: HomePageProps) => {
   const { status } = useSession();
   const searchParams = useSearchParams();
-  const { language } = useReadingLanguage();
+  const { language, source, ready, availableLangs, setLanguage } =
+    useReadingLanguage();
   const { hasHistory, readHref } = useReadingFlow();
   const copy = useUiCopy();
   const authEnabled = isAuthEnabled();
+  const urlLang = searchParams.get("lang");
+  const urlSource = searchParams.get("source");
+  const selectedSource = resolveSource(
+    availableLangs.find((item) => item.code === language),
+    source,
+  );
+  const heroTitle = hasUiCopy(language)
+    ? copy.heroTitle
+    : selectedSource?.bookTitle?.trim() || copy.heroTitle;
 
   const [parts, setParts] = useState<ApiTocPart[]>(initialParts);
   const [showDownButton, setShowDownButton] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!ready) return;
+    if (!isLanguageCode(urlLang)) return;
+    setLanguage(urlLang, isSourceId(urlSource) ? urlSource : undefined);
+  }, [ready, setLanguage, urlLang, urlSource]);
+
+  useEffect(() => {
     let cancelled = false;
-    fetchTocParts(language)
+    setParts([]);
+    fetchTocParts(language, source)
       .then((next) => {
         if (!cancelled) setParts(next);
       })
@@ -63,7 +85,7 @@ const HomePage = ({ parts: initialParts = [] }: HomePageProps) => {
     return () => {
       cancelled = true;
     };
-  }, [initialParts, language]);
+  }, [initialParts, language, source]);
 
   const paperCount = parts.reduce((sum, part) => sum + part.papers.length, 0);
   const partCount = parts.length;
@@ -117,7 +139,7 @@ const HomePage = ({ parts: initialParts = [] }: HomePageProps) => {
           {/* Content */}
           <div className="relative z-10 max-w-7xl mx-auto w-full">
             <h1 className="mt-0 mb-8 text-5xl md:text-7xl font-bold text-white max-w-4xl mx-auto leading-tight drop-shadow-lg">
-              {copy.heroTitle}
+              {heroTitle}
             </h1>
             <p className="text-xl md:text-2xl text-white mb-14 max-w-2xl mx-auto leading-relaxed drop-shadow">
               {fillUiCopy(copy.heroSubtitle, {
@@ -420,7 +442,7 @@ const HomePage = ({ parts: initialParts = [] }: HomePageProps) => {
               {parts.map((part) => {
                 const firstPaper = part.papers[0];
                 const href = firstPaper
-                  ? paperPath(firstPaper.id, undefined, language)
+                  ? paperPath(firstPaper.id, undefined, language, source)
                   : readHref;
                 return (
                   <a

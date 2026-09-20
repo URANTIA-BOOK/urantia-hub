@@ -1,5 +1,8 @@
 import { deriveReadHref, readStoredLastVisited } from "@/libs/readingFlow";
-import { readStoredReadingLanguage } from "@/libs/readingLanguage";
+import {
+  readStoredReadingLanguage,
+  readStoredReadingSource,
+} from "@/libs/readingLanguage";
 
 /**
  * Shared Read door. Auth and anon both carry intended flow through
@@ -12,5 +15,6 @@ export const deriveReadLink = (
   return deriveReadHref({
     lastVisited: readStoredLastVisited(),
     language: readStoredReadingLanguage(),
+    source: readStoredReadingSource(),
   });
 };

@@ -37,7 +37,7 @@ export const ReadingFlowProvider = ({
   children: React.ReactNode;
 }) => {
   const { status } = useSession();
-  const { language } = useReadingLanguage();
+  const { language, source } = useReadingLanguage();
   const [lastVisited, setLastVisitedState] = useState<LastVisitedNode | null>(
     null
   );
@@ -87,10 +87,10 @@ export const ReadingFlowProvider = ({
       lastVisited,
       ready,
       hasHistory: Boolean(lastVisited?.paperId),
-      readHref: deriveReadHref({ lastVisited, language }),
+      readHref: deriveReadHref({ lastVisited, language, source }),
       setLastVisited,
     }),
-    [language, lastVisited, ready, setLastVisited]
+    [language, lastVisited, ready, setLastVisited, source]
   );
 
   return (
