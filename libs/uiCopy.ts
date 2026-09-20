@@ -1,21 +1,25 @@
 import { useReadingLanguage } from "@/context/readingLanguage";
-import type { ReaderLang } from "@/libs/readingLanguage";
-import de from "@/locales/de.json";
 import eng from "@/locales/eng.json";
+import de from "@/locales/de.json";
 import es from "@/locales/es.json";
 import fr from "@/locales/fr.json";
 
 export type UiCopy = typeof eng;
 
-const COPY: Record<ReaderLang, UiCopy> = {
+const COPY: Record<string, UiCopy> = {
   eng,
   es,
   fr,
   de,
 };
 
-export function getUiCopy(language: ReaderLang): UiCopy {
+export function getUiCopy(language: string): UiCopy {
   return COPY[language] ?? COPY.eng;
+}
+
+/** Chrome JSON exists for this reading code. Catalog bookTitle covers the rest. */
+export function hasUiCopy(language: string): boolean {
+  return Object.prototype.hasOwnProperty.call(COPY, language);
 }
 
 export function fillUiCopy(
@@ -57,6 +61,6 @@ export function formatPartHeading(
   return fillUiCopy(copy.partLabel, { id: partId });
 }
 
-export function localeKeys(language: ReaderLang = "eng"): string[] {
+export function localeKeys(language = "eng"): string[] {
   return Object.keys(getUiCopy(language)).sort();
 }

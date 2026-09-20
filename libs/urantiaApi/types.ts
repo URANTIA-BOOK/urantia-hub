@@ -44,8 +44,27 @@ export type ApiTocResponse = {
 
 export type ApiLanguage = {
   code: string;
+  slug: string;
+  bcp47: string;
   name: string;
+  uiLabel: string;
+  uiLabelEnglish: string;
   entityCount: number;
+  paragraphCount: number;
+  sources: ApiTranslationSource[];
+};
+
+export type ApiTranslationSource = {
+  id: string;
+  treeSlug: string;
+  versionNumber: string | null;
+  editionNative: string | null;
+  editionEnglish: string | null;
+  bookTitle: string | null;
+  regionCode: string | null;
+  firstPublished: number | null;
+  copyrightYear?: number | null;
+  isPrimary: boolean;
   paragraphCount: number;
 };
 
