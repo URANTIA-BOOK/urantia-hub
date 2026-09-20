@@ -18,7 +18,7 @@ const PaperCard = ({
   progress: number;
 }) => {
   const copy = useUiCopy();
-  const { language } = useReadingLanguage();
+  const { language, source } = useReadingLanguage();
   const isCompleted = progress === 100;
   const isNotStarted = progress === 0;
 
@@ -30,8 +30,8 @@ const PaperCard = ({
 
   const href =
     progress > 0 && progress < 100 && !nextGlobalId?.endsWith("0.1")
-      ? paperPath(paperId, nextGlobalId, language)
-      : paperPath(paperId, undefined, language);
+      ? paperPath(paperId, nextGlobalId, language, source)
+      : paperPath(paperId, undefined, language, source);
 
   return (
     <Link

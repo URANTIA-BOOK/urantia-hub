@@ -39,7 +39,7 @@ type TOCPageProps = {
 const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
   // Hooks.
   const { status } = useSession();
-  const { language } = useReadingLanguage();
+  const { language, source } = useReadingLanguage();
   const copy = useUiCopy();
   const { nodes, loading: tocLoading } = useTranslatedToc(sourceNodes);
 
@@ -170,7 +170,7 @@ const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
                 return (
                   <Link
                     className="relative flex flex-col justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                    href={paperPath(`${paper.paperId}`, undefined, language)}
+                    href={paperPath(`${paper.paperId}`, undefined, language, source)}
                     key={paper.globalId}
                   >
                     <div className="flex flex-col">
@@ -223,7 +223,7 @@ const ReadPage = ({ nodes: sourceNodes = [] }: TOCPageProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
               <Link
                 className="relative block px-4 py-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                href={paperPath(`${currentNode.paperId}`, undefined, language)}
+                href={paperPath(`${currentNode.paperId}`, undefined, language, source)}
               >
                 <span className="text-xs text-gray-400">
                   {copy.forewordLabel}

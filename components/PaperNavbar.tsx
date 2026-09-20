@@ -30,7 +30,7 @@ const PaperNavbar = ({
   playbackRate,
 }: PaperNavbarProps) => {
   const copy = useUiCopy();
-  const { language } = useReadingLanguage();
+  const { language, source } = useReadingLanguage();
 
   if (paperId === undefined) return null;
   if (!paperTitle) return null;
@@ -43,7 +43,7 @@ const PaperNavbar = ({
     <div
       className={`flex items-center ${
         audioIsPlaying ? "justify-center" : "justify-between"
-      } w-full max-w-3xl mt-1 mb-6`}
+      } w-full max-w-3xl`}
     >
       {!audioIsPlaying && (
         <div
@@ -53,7 +53,7 @@ const PaperNavbar = ({
           <Link
             aria-label={copy.previousPaper}
             className="px-2 py-2 text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={paperPath(previousId, undefined, language)}
+            href={paperPath(previousId, undefined, language, source)}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -71,7 +71,7 @@ const PaperNavbar = ({
           <Link
             aria-label={copy.nextPaperAria}
             className="px-2 py-2 flex text-right justify-end text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={paperPath(nextId, undefined, language)}
+            href={paperPath(nextId, undefined, language, source)}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path

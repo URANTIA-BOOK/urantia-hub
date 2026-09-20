@@ -50,7 +50,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
 import { useReadingLanguage } from "@/context/readingLanguage";
 import { paperPath } from "@/libs/readingFlow";
-import { isReaderLang } from "@/libs/readingLanguage";
+import { isLanguageCode, isSourceId } from "@/libs/readingLanguage";
 import { formatPaperLabel, formatPaperTitle, useUiCopy } from "@/libs/uiCopy";
 
 const notoSerifFont = Noto_Serif({
@@ -84,38 +84,44 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
   const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
-  const { language, ready: languageReady, setLanguage } = useReadingLanguage();
+  const { language, source, ready: languageReady, setLanguage } = useReadingLanguage();
 
   const sourceNodes = paperData?.data?.results ?? [];
   const nodes = overlayNodes ?? sourceNodes;
 
   // Get paper details.
   const firstNode = nodes[0] ?? sourceNodes[0];
-  const paperId = firstNode?.paperId ?? "";
+  const paperName =
+    typeof router.query.paperName === "string" ? router.query.paperName : "";
+  const paperId = firstNode?.paperId || getPaperIdFromPaperUrl(paperName);
   const paperTitle = firstNode?.paperTitle ?? "";
   const urlLang =
     router.isReady && typeof router.query.lang === "string"
       ? router.query.lang
       : null;
+  const urlSource =
+    router.isReady && typeof router.query.source === "string"
+      ? router.query.source
+      : null;
+  const needsClientPaper = language !== "eng" || sourceNodes.length === 0;
   const langLoading =
-    !languageReady || (language !== "eng" && overlayNodes === null);
+    !languageReady || (needsClientPaper && overlayNodes === null);
 
   useEffect(() => {
     if (!languageReady || !router.isReady) return;
-    if (isReaderLang(urlLang) && urlLang !== language) {
-      setLanguage(urlLang);
-    }
-  }, [language, languageReady, router.isReady, setLanguage, urlLang]);
+    if (!isLanguageCode(urlLang)) return;
+    setLanguage(urlLang, isSourceId(urlSource) ? urlSource : undefined);
+  }, [languageReady, router.isReady, setLanguage, urlLang, urlSource]);
 
   useEffect(() => {
     if (!paperId || !languageReady) return;
-    if (language === "eng") {
+    if (!needsClientPaper) {
       setOverlayNodes(null);
       return;
     }
     let cancelled = false;
     setOverlayNodes(null);
-    fetchPaper(paperId, language)
+    fetchPaper(paperId, language, source)
       .then((data) => {
         const results = data?.data?.results ?? [];
         results.forEach((node: UBNode) => {
@@ -134,7 +140,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     return () => {
       cancelled = true;
     };
-  }, [language, languageReady, paperData, paperId]);
+  }, [language, languageReady, needsClientPaper, paperData, paperId, source]);
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -781,7 +787,9 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           "@context": "https://schema.org",
           "@type": "Article",
           "name": formatPaperTitle(copy, paperId, paperTitle),
-          "description": `${formatPaperTitle(copy, paperId, paperTitle)} - ${paperData.data.results[2].text}`,
+          "description": `${formatPaperTitle(copy, paperId, paperTitle)} - ${
+            paperData?.data?.results?.[2]?.text ?? ""
+          }`,
           "url": `https://www.urantiahub.com/papers/${paperIdToUrl(paperId)}`,
           "isPartOf": {
             "@type": "WebSite",
@@ -943,7 +951,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={paperPath(`${nextPaperId}`, undefined, language)}
+              href={paperPath(`${nextPaperId}`, undefined, language, source)}
             >
               {copy.nextPaper}{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">

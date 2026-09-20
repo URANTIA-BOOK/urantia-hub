@@ -19,6 +19,11 @@ describe("readingFlow", () => {
     expect(paperPath("0", "0:0.0.1", "es")).toBe(
       "/papers/foreword?lang=es#0:0.0.1"
     );
+    expect(
+      paperPath("0", "0:0.0.1", "es", "UF-SPA-724-2009-1.13")
+    ).toBe(
+      "/papers/foreword?lang=es&source=UF-SPA-724-2009-1.13#0:0.0.1"
+    );
     expect(paperPath("1", "1:0.1", "eng")).toBe(
       "/papers/paper-1-the-universal-father#1:0.1"
     );

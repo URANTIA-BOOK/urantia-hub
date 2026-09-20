@@ -44,7 +44,7 @@ export function useTranslatedToc<T extends TocLike>(sourceNodes: T[]): {
   nodes: T[];
   loading: boolean;
 } {
-  const { language, ready } = useReadingLanguage();
+  const { language, source, ready } = useReadingLanguage();
   const [overlay, setOverlay] = useState<TocLike[] | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -57,7 +57,7 @@ export function useTranslatedToc<T extends TocLike>(sourceNodes: T[]): {
     }
     let cancelled = false;
     setPending(true);
-    fetchToc(language)
+    fetchToc(language, source)
       .then((nodes) => {
         if (!cancelled) setOverlay(nodes);
       })
@@ -71,7 +71,7 @@ export function useTranslatedToc<T extends TocLike>(sourceNodes: T[]): {
     return () => {
       cancelled = true;
     };
-  }, [language, ready]);
+  }, [language, ready, source]);
 
   return {
     nodes: overlay ? overlayTranslatedToc(sourceNodes, overlay) : sourceNodes,

@@ -1,5 +1,5 @@
 import { paperIdToUrl } from "@/utils/paperFormatters";
-import type { ReaderLang } from "@/libs/readingLanguage";
+import { overlaySearch } from "@/libs/readingLanguage";
 
 export const LAST_VISITED_KEY = "lastVisitedNode";
 
@@ -37,27 +37,28 @@ export function writeStoredLastVisited(node: LastVisitedNode): void {
 export function paperPath(
   paperId: string,
   globalId?: string | null,
-  language?: ReaderLang | string | null
+  language?: string | null,
+  source?: string | null
 ): string {
   const path = `/papers/${paperIdToUrl(paperId)}`;
-  const query =
-    language && language !== "eng"
-      ? `?lang=${encodeURIComponent(language)}`
-      : "";
+  const query = overlaySearch(language, source);
   const hash = globalId ? `#${globalId}` : "";
   return `${path}${query}${hash}`;
 }
 
 export function deriveReadHref(input?: {
   lastVisited?: LastVisitedNode | null;
-  language?: ReaderLang | string | null;
+  language?: string | null;
+  source?: string | null;
 }): string {
   const lastVisited = input?.lastVisited;
   const language = input?.language;
+  const source = input?.source;
   const query = new URLSearchParams();
   if (lastVisited?.paperId) query.set("paperId", lastVisited.paperId);
   if (lastVisited?.globalId) query.set("globalId", lastVisited.globalId);
   if (language && language !== "eng") query.set("lang", language);
+  if (source) query.set("source", source);
   const encoded = query.toString();
   return encoded
     ? `/api/redirect/user/read?${encoded}`
@@ -72,6 +73,7 @@ export function resolveReadRedirect(input: {
   paperId?: string | null;
   globalId?: string | null;
   language?: string | null;
+  source?: string | null;
   lastVisitedPaperId?: string | null;
   lastVisitedGlobalId?: string | null;
 }): string {
@@ -81,5 +83,5 @@ export function resolveReadRedirect(input: {
     input.lastVisitedGlobalId ||
     input.globalId ||
     (paperId === DEFAULT_START.paperId ? DEFAULT_START.globalId : undefined);
-  return paperPath(paperId, globalId, input.language);
+  return paperPath(paperId, globalId, input.language, input.source);
 }
