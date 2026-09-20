@@ -1,8 +1,8 @@
 // Node modules.
-import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import type { NextApiRequest, NextApiResponse } from "next";
 // Relative modules.
+import { getResendClient } from "@/libs/resend";
 import UserService from "@/services/user";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 import {
@@ -15,8 +15,6 @@ import { withSentry } from "@/middleware/sentry";
 const logger = createLogger("sendContinueReading");
 
 const userService = new UserService();
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const handleCron = async (_: NextApiRequest, res: NextApiResponse) => {
   const users = await userService.findMany({
@@ -99,7 +97,7 @@ const handleCron = async (_: NextApiRequest, res: NextApiResponse) => {
 
   try {
     // Send the emails
-    await resend.batch.send(validMessages);
+    await getResendClient().batch.send(validMessages);
 
     // Update the lastAskedNotificationsAt field for each user
     await userService.updateMany({

@@ -1,8 +1,8 @@
 // Node modules.
-import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import type { NextApiRequest, NextApiResponse } from "next";
 // Relative modules.
+import { getResendClient } from "@/libs/resend";
 import SentQuoteService from "@/services/sentQuote";
 import UserService from "@/services/user";
 import CuratedQuoteService from "@/services/curatedQuote";
@@ -19,8 +19,6 @@ const logger = createLogger("sendDailyQuote");
 const curatedQuoteService = new CuratedQuoteService();
 const sentQuoteService = new SentQuoteService();
 const userService = new UserService();
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const handleCron = async (_: NextApiRequest, res: NextApiResponse) => {
   // Get users who have both general and daily quote notifications enabled
@@ -129,7 +127,7 @@ const handleCron = async (_: NextApiRequest, res: NextApiResponse) => {
 
   try {
     // Send the emails
-    await resend.batch.send(messages);
+    await getResendClient().batch.send(messages);
 
     // Create sent quotes for each user.
     logger.info("Creating sent quotes");

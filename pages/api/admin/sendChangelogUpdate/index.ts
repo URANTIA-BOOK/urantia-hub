@@ -1,8 +1,8 @@
 // Node modules.
-import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import type { NextApiRequest, NextApiResponse } from "next";
 // Relative modules.
+import { getResendClient } from "@/libs/resend";
 import UserService from "@/services/user";
 import {
   getChangelogUpdateEmailHTML,
@@ -15,8 +15,6 @@ import createLogger from "@/utils/logger";
 const logger = createLogger("sendChangelogUpdate");
 
 const userService = new UserService();
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const handleSendChangelogUpdate = async (
   req: NextApiRequest,
   res: NextApiResponse
@@ -80,7 +78,7 @@ const handleSendChangelogUpdate = async (
 
   try {
     // Send the emails
-    await resend.batch.send(messages);
+    await getResendClient().batch.send(messages);
 
     res.status(200).json({
       userEmails,
