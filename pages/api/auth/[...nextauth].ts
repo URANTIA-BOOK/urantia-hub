@@ -2,10 +2,10 @@
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import NextAuth from "next-auth";
-import { Resend } from "resend";
 import type { Adapter } from "next-auth/adapters";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 // Relative modules.
+import { getResendClient } from "@/libs/resend";
 import { getPrismaClient } from "@/libs/prisma/client";
 import {
   getMagicLinkEmailHTML,
@@ -14,8 +14,6 @@ import {
 import createLogger from "@/utils/logger";
 
 const logger = createLogger("auth");
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const prisma = getPrismaClient();
 
@@ -27,7 +25,7 @@ export const authOptions = {
       sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
           logger.info("Sending magic link email", { email });
-          await resend.emails.send({
+          await getResendClient().emails.send({
             from: process.env.EMAIL_FROM as string,
             to: email,
             subject: "Sign in to UrantiaHub",
