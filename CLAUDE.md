@@ -89,6 +89,51 @@ percent-encoded dots to dodge path filters. If a legitimate path ever returns
 an unexplained 403, check this rule first:
 `vercel firewall rules inspect block-credential-probes`.
 
+### Sentry: two orgs, and only Vercel reports
+
+The hub reports to org `urantiahub`, project `urantiahub` (org id
+4506857923739648, project id 4506857924984832). Kelson also owns a SECOND
+Sentry org, `urantiadev`, whose only project is `javascript-nextjs`. One login
+reaches both through the org switcher. A setting changed in the wrong org looks
+like it did nothing, so check the breadcrumb before debugging further.
+`SENTRY_AUTH_TOKEN` here is a release-upload token and cannot read the issues
+API; use the Sentry MCP for that.
+
+This repo is PUBLIC, and the DSN used to be hardcoded in the three
+`sentry.*.config.ts` files. Every clone reported into production Sentry. Over
+14 days to 2026-09-20 that was 42 of 44 events, from local Docker runs and from
+a fork at `urantia.uklok.cloud`. Only 2 events came from urantiahub.com.
+
+Two layers now stop it, and both are needed:
+- Allowed Domains on the `urantiahub` project (`urantiahub.com`,
+  `www.urantiahub.com`) rejects browser events by `Origin`/`Referer`.
+- `enabled` in the config files rejects server events, which carry no browser
+  URL and so slip past the inbound filter.
+
+**The client gate needs the NEXT_PUBLIC_ copy.** `sentry.client.config.ts` uses
+`NEXT_PUBLIC_VERCEL_ENV`; the server and edge configs use the bare
+`VERCEL_ENV`. Next.js inlines only `NEXT_PUBLIC_*` into browser code, so a bare
+`process.env.VERCEL_ENV` on the client compiles to an undefined lookup and
+silently disables reporting. This shipped once and was caught only by reading
+the deployed bundle.
+
+Verify a Sentry change by fetching the live `_app` chunk and reading what
+`enabled` compiled to, not by reading the source:
+
+```bash
+curl -s https://www.urantiahub.com/ | grep -oE '/_next/static/chunks/pages/_app-[a-z0-9]+\.js'
+# then fetch that chunk and look for `enabled:!0` next to the dsn
+```
+
+`tunnelRoute` is on, so browser events POST to `/monitoring` on our own domain
+and the server forwards them. Verified on 2026-09-20 that Allowed Domains does
+NOT reject the forwarded event.
+
+### Two crons share one tick
+
+`vercel.json` schedules `sendDailyQuote` and `sendContinueReadingAfter24Hours`
+both at `0 15 * * *`. Not yet staggered.
+
 ### Specialized Scripts
 ```bash
 npm run screenshots              # Generate screenshots for community resources
@@ -211,13 +256,20 @@ Key environment variables (see `.env.example`):
 - `REDIS_URL`: Redis connection
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: OAuth
-- `RESEND_API_KEY`, `EMAIL_FROM`: Email service
+- `RESEND_API_KEY`, `EMAIL_FROM`: Email service. Reach the client through
+  `getResendClient()` in `libs/resend`, never `new Resend()` at module scope:
+  the constructor throws on a missing key, which fails the import and takes
+  the whole route down before any try/catch runs.
 - `NEXT_PUBLIC_URANTIA_DEV_API_HOST`: External API for paper content (`https://api.urantia.dev`)
 - `ANTHROPIC_API_KEY`: Anthropic Claude (default AI model)
 - `OPENAI_API_KEY`, `XAI_API_KEY`: Alternative AI models
 - `AI_MODEL`: Model selection (default `claude-haiku-4-5-20251001`)
 - `CRON_SECRET`: Secure cron endpoints
 - `ADMIN_SECRET`: Secure admin endpoints
+- `NEXT_PUBLIC_SENTRY_DSN`: the Sentry DSN. The config files read this now;
+  it is no longer hardcoded. Must stay in sync with the `urantiahub` project.
+- `VERCEL_ENV` / `NEXT_PUBLIC_VERCEL_ENV`: set by Vercel, gate Sentry reporting.
+  See "Sentry: two orgs, and only Vercel reports" above.
 
 ## Important Conventions
 
