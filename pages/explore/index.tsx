@@ -790,20 +790,28 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
   );
 };
 
-export async function getStaticProps() {
+export async function getServerSideProps(context: any) {
+  const { cacheEdition, editionFromRequest } = await import(
+    "@/libs/editionRequest"
+  );
   const { fetchToc } = await import("@/libs/urantiaApi/client");
+  const { lang, source } = editionFromRequest(
+    context.query ?? {},
+    context.req?.headers?.cookie
+  );
   let nodes: any[] = [];
   try {
-    nodes = await fetchToc();
+    nodes = await fetchToc(lang, source);
+    cacheEdition(context.res);
   } catch (error) {
-    console.error("[getStaticProps] Failed to fetch TOC:", error);
+    console.error("[getServerSideProps] Failed to fetch TOC:", error);
+    context.res.setHeader("Cache-Control", "private, no-store");
   }
 
   return {
     props: {
       nodes,
     },
-    revalidate: 60,
   };
 }
 

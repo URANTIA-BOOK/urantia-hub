@@ -360,7 +360,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
-  // that getStaticProps returns when the upstream API call fails.
+  // that the server render returns when the upstream API call fails.
   if (!nodes.length) {
     return <Spinner />;
   }
@@ -964,28 +964,33 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   );
 };
 
-export async function getStaticProps(context: any) {
+export async function getServerSideProps(context: any) {
+  const { cacheEdition, editionFromRequest } = await import(
+    "@/libs/editionRequest"
+  );
+  const { editionQuery, fetchPaper } = await import("@/libs/urantiaApi/client");
   const { paperName } = context.params as { paperName: string };
+  const { lang, source } = editionFromRequest(
+    context.query ?? {},
+    context.req?.headers?.cookie
+  );
+  const edition = editionQuery(lang, source);
 
-  // Get valid paper URLs.
   const validPaperUrls = getValidPaperUrls();
 
-  // Check if the paperName is a valid paper URL.
   if (!validPaperUrls.includes(paperName)) {
-    // If the paperName is a paperId, redirect to the correct URL.
     const paperId = Number(paperName);
 
     if (!isNaN(paperId) && paperId >= 0 && paperId <= 196) {
       const paperUrl = paperIdToUrl(String(paperId));
       return {
         redirect: {
-          destination: `/papers/${paperUrl}`,
+          destination: `/papers/${paperUrl}${edition}`,
           permanent: true,
         },
       };
     }
 
-    // If the paperName is not a valid paper URL, return a 404.
     return {
       notFound: true,
     };
@@ -998,16 +1003,15 @@ export async function getStaticProps(context: any) {
     };
   }
 
-  const { fetchPaper } = await import("@/libs/urantiaApi/client");
   let paperData;
   try {
-    paperData = await fetchPaper(String(paperId));
+    paperData = await fetchPaper(String(paperId), lang, source);
   } catch (error) {
-    console.error(`[getStaticProps] Failed to fetch paper ${paperId}:`, error);
-    return { props: { paperData: { data: { results: [] } } }, revalidate: 60 };
+    console.error(`[getServerSideProps] Failed to fetch paper ${paperId}:`, error);
+    context.res.setHeader("Cache-Control", "private, no-store");
+    return { props: { paperData: { data: { results: [] } } } };
   }
 
-  // Add mp3 file URLs for each node if there is one.
   paperData?.data?.results?.forEach((node: UBNode) => {
     if (PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]) {
       node.mp3Url = `${
@@ -1016,25 +1020,11 @@ export async function getStaticProps(context: any) {
     }
   });
 
+  cacheEdition(context.res);
   return {
     props: {
       paperData,
     },
-  };
-}
-
-export async function getStaticPaths() {
-  // Only pre-render a small set at build time to avoid rate-limiting the API.
-  // The rest are generated on-demand via fallback: "blocking".
-  const prerenderedPaperIds = [0, 1, 2, 3, 4, 5];
-  const paths = prerenderedPaperIds.map((paperId) => {
-    const paperName = paperIdToUrl(String(paperId));
-    return { params: { paperName } };
-  });
-
-  return {
-    paths,
-    fallback: "blocking",
   };
 }
 
