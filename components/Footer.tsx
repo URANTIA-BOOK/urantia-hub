@@ -1,11 +1,13 @@
 // Node modules.
 import Link from "next/link";
+import { useUiCopy } from "@/libs/uiCopy";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { useSession } from "next-auth/react";
 
 const Footer = ({ marginBottom }: { marginBottom?: string }) => {
   // Hooks.
   const { status } = useSession();
+  const copy = useUiCopy();
 
   return (
     <footer
@@ -22,7 +24,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
           </div>
           <div>
             <h4 className="text-gray-600 text-sm font-semibold mb-4">
-              Navigation
+              {copy.navigation}
             </h4>
             <ul className="space-y-2">
               <li>
@@ -30,7 +32,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/"
                 >
-                  Home
+                  {copy.home}
                 </Link>
               </li>
               <li>
@@ -41,7 +43,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href={deriveReadLink(status)}
                 >
-                  Read
+                  {copy.read}
                 </a>
               </li>
               <li>
@@ -49,14 +51,14 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/papers"
                 >
-                  Papers
+                  {copy.papers}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
             <h4 className="text-gray-600 text-sm font-semibold mb-4">
-              Resources
+              {copy.resources}
             </h4>
             <ul className="space-y-2">
               <li>
@@ -64,7 +66,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/community-resources"
                 >
-                  Community Resources
+                  {copy.communityResources}
                 </Link>
               </li>
               <li>
@@ -74,7 +76,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Open-Source Papers (audio + text)
+                  {copy.openSourcePapers}
                 </Link>
               </li>
               <li>
@@ -82,7 +84,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/blockchain-archive"
                 >
-                  Blockchain Archive
+                  {copy.blockchainArchive}
                 </Link>
               </li>
               <li>
@@ -90,7 +92,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/changelog"
                 >
-                  Latest Updates
+                  {copy.latestUpdates}
                 </Link>
               </li>
               <li>
@@ -98,7 +100,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="mailto:team@urantiahub.com"
                 >
-                  Contact
+                  {copy.contact}
                 </a>
               </li>
               <li>
@@ -106,20 +108,20 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/about"
                 >
-                  About
+                  {copy.about}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="text-gray-600 text-sm font-semibold mb-4">Legal</h4>
+            <h4 className="text-gray-600 text-sm font-semibold mb-4">{copy.legal}</h4>
             <ul className="space-y-2">
               <li>
                 <Link
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/privacy-policy"
                 >
-                  Privacy
+                  {copy.privacy}
                 </Link>
               </li>
               <li>
@@ -127,7 +129,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/terms-of-service"
                 >
-                  Terms
+                  {copy.terms}
                 </Link>
               </li>
               <li>
@@ -135,7 +137,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
                   href="/cookie-policy"
                 >
-                  Cookies
+                  {copy.cookies}
                 </Link>
               </li>
             </ul>
@@ -143,7 +145,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
         </div>
         <div className="text-sm border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p>
-            &copy; {new Date().getFullYear()} UrantiaHub. All rights reserved.
+            &copy; {new Date().getFullYear()} UrantiaHub. {copy.allRightsReserved}
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link
@@ -157,7 +159,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>{" "}
-              All systems normal.
+              {copy.allSystemsNormal}
             </Link>
           </div>
         </div>
