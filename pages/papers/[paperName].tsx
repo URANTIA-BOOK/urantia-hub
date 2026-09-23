@@ -82,6 +82,16 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
   const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
   const { language, source, ready: languageReady } = useReadingLanguage();
+  const queryLang =
+    router.isReady && typeof router.query.lang === "string"
+      ? router.query.lang
+      : "";
+  const querySource =
+    router.isReady && typeof router.query.source === "string"
+      ? router.query.source
+      : "";
+  const editionLang = queryLang || language;
+  const editionSource = querySource || source;
 
   const sourceNodes = paperData?.data?.results ?? [];
   const nodes = overlayNodes ?? sourceNodes;
@@ -126,26 +136,31 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   } = useAudioPlayer(nodes, markParagraphAsRead);
   const paperIdNumber = parseInt(paperId);
   const nextPaperId = paperIdNumber < 196 ? paperIdNumber + 1 : null;
-  const needsOverlay = languageReady && language !== "eng";
+  const needsOverlay =
+    languageReady && router.isReady && editionLang !== "eng";
 
   useEffect(() => {
-    if (!languageReady || !paperId) return;
-    if (language === "eng") {
+    if (!languageReady || !router.isReady || !paperId) return;
+    if (editionLang === "eng") {
       setOverlayNodes(null);
       return;
     }
     let cancelled = false;
-    fetchPaper(paperId, language, source)
+    fetchPaper(paperId, editionLang, editionSource)
       .then((data) => {
         if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error(
+          `[paper] overlay failed for lang=${editionLang}:`,
+          error
+        );
         if (!cancelled) setOverlayNodes(sourceNodes);
       });
     return () => {
       cancelled = true;
     };
-  }, [language, languageReady, paperId, source]);
+  }, [editionLang, editionSource, languageReady, paperId, router.isReady]);
 
   // Calculate nodes for modals.
   const explainNode = selectedGlobalIdExplain
@@ -245,8 +260,8 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     const callbackUrl = paperHref(
       `${paperId}`,
       topMostVisibleNode?.id,
-      language,
-      source
+      editionLang,
+      editionSource
     );
 
     // Sign in.
@@ -928,7 +943,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={paperHref(`${nextPaperId}`, null, language, source)}
+              href={paperHref(`${nextPaperId}`, null, editionLang, editionSource)}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">
