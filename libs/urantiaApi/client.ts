@@ -23,12 +23,16 @@ export function resolveApiHost(
   env: NodeJS.ProcessEnv = process.env,
   onServer = typeof window === "undefined"
 ): string | undefined {
-  if (onServer) {
-    return (
-      env.URANTIA_DEV_API_INTERNAL_HOST || env.NEXT_PUBLIC_URANTIA_DEV_API_HOST
-    );
-  }
-  return env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
+  // Direct member reads. Next inlines NEXT_PUBLIC_* only in that form.
+  // `env.NEXT_PUBLIC_*` stays empty in the browser, so a language overlay
+  // fetched `undefined/papers/...` and the page kept the English payload.
+  const publicHost = process.env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
+  if (!onServer) return publicHost;
+  return (
+    process.env.URANTIA_DEV_API_INTERNAL_HOST ||
+    env.URANTIA_DEV_API_INTERNAL_HOST ||
+    publicHost
+  );
 }
 
 /** English stays the bare path this client already used. */
