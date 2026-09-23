@@ -26,6 +26,21 @@ export function isAuthEnabled(
   return emailAuthConfigured(env) || googleAuthConfigured(env);
 }
 
+export type SignInMethods = {
+  email: boolean;
+  google: boolean;
+};
+
+/** The sign-in page renders a method only when its pair is set. */
+export function configuredSignInMethods(
+  env: NodeJS.ProcessEnv = process.env
+): SignInMethods {
+  return {
+    email: emailAuthConfigured(env),
+    google: googleAuthConfigured(env),
+  };
+}
+
 export type AuthOffNextAuthKind = "session" | "csrf" | "providers" | "redirect";
 
 /**

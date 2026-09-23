@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   authOffNextAuthKind,
+  configuredSignInMethods,
   emailAuthConfigured,
   googleAuthConfigured,
   isAuthEnabled,
@@ -28,6 +29,27 @@ describe("isAuthEnabled", () => {
     expect(
       isAuthEnabled({ RESEND_API_KEY: "key", EMAIL_FROM: "a@b.c" })
     ).toBe(true);
+  });
+
+  it("names each complete pair for the sign-in page", () => {
+    expect(
+      configuredSignInMethods({
+        GOOGLE_CLIENT_ID: "id",
+        GOOGLE_CLIENT_SECRET: "secret",
+      })
+    ).toEqual({ email: false, google: true });
+    expect(
+      configuredSignInMethods({ RESEND_API_KEY: "key", EMAIL_FROM: "a@b.c" })
+    ).toEqual({ email: true, google: false });
+    expect(
+      configuredSignInMethods({
+        GOOGLE_CLIENT_ID: "id",
+        GOOGLE_CLIENT_SECRET: "secret",
+        RESEND_API_KEY: "key",
+        EMAIL_FROM: "a@b.c",
+      })
+    ).toEqual({ email: true, google: true });
+    expect(configuredSignInMethods({})).toEqual({ email: false, google: false });
   });
 
   it("keeps session probes as JSON and redirects the rest", () => {
