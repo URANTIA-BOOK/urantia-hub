@@ -19,14 +19,40 @@ import type {
   ParagraphParallels,
 } from "./types";
 
-const API_HOST = process.env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
+export function resolveApiHost(
+  env: NodeJS.ProcessEnv = process.env,
+  onServer = typeof window === "undefined"
+): string | undefined {
+  if (onServer) {
+    return (
+      env.URANTIA_DEV_API_INTERNAL_HOST || env.NEXT_PUBLIC_URANTIA_DEV_API_HOST
+    );
+  }
+  return env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
+}
+
+/** English stays the bare path this client already used. */
+export function editionQuery(
+  lang?: string | null,
+  source?: string | null
+): string {
+  if (!lang || lang === "eng") return "";
+  const params = new URLSearchParams();
+  params.set("lang", lang);
+  if (source) params.set("source", source);
+  return `?${params.toString()}`;
+}
+
+function apiUrl(path: string, lang?: string | null, source?: string | null) {
+  return `${resolveApiHost()}${path}${editionQuery(lang, source)}`;
+}
 
 /**
  * Fetch the table of contents as a flat array of TOCNode objects
  * (compatible with the legacy format expected by pages/papers and pages/explore).
  */
-export async function fetchToc() {
-  const url = `${API_HOST}/toc`;
+export async function fetchToc(lang?: string | null, source?: string | null) {
+  const url = apiUrl("/toc", lang, source);
   try {
     const res = await fetch(url);
     if (!res.ok) {
@@ -45,8 +71,13 @@ export async function fetchToc() {
  * The result is wrapped in the legacy `{ data: { results: UBNode[] } }` shape
  * to match what the paper reader page expects.
  */
-export async function fetchPaper(paperId: string) {
-  const url = `${API_HOST}/papers/${paperId}`;
+export async function fetchPaper(
+  paperId: string,
+  lang?: string | null,
+  source?: string | null
+) {
+  const url = apiUrl(`/papers/${paperId}`, lang, source);
+  const language = lang && lang !== "eng" ? lang : "eng";
   try {
     const res = await fetch(url);
     if (!res.ok) {
@@ -67,7 +98,7 @@ export async function fetchPaper(paperId: string) {
       paperTitle: paper.title,
       partId: paper.partId,
       labels: paper.labels ?? [],
-      language: "eng",
+      language,
       type: "paper",
       objectID: `${paper.partId}:${paper.id}`,
     });
@@ -85,13 +116,13 @@ export async function fetchPaper(paperId: string) {
           sectionTitle: p.sectionTitle ?? null,
           partId: paper.partId,
           labels: [],
-          language: "eng",
+          language,
           type: "section",
           objectID: `${paper.partId}:${paper.id}.${sectionId}`,
         });
         lastSectionId = sectionId;
       }
-      nodes.push(mapParagraphToUBNode(p));
+      nodes.push(mapParagraphToUBNode(p, language));
     }
 
     return { data: { results: nodes } };
@@ -106,7 +137,9 @@ export async function fetchPaper(paperId: string) {
  * or paperSectionParagraphId). Returns a UBNode.
  */
 export async function fetchParagraph(ref: string): Promise<UBNode> {
-  const res = await fetch(`${API_HOST}/paragraphs/${encodeURIComponent(ref)}`);
+  const res = await fetch(
+    `${resolveApiHost()}/paragraphs/${encodeURIComponent(ref)}`
+  );
   if (!res.ok) {
     throw new Error(
       `Failed to fetch paragraph ${ref}: ${res.status} ${res.statusText}`
@@ -123,7 +156,7 @@ export async function fetchParagraph(ref: string): Promise<UBNode> {
 export async function fetchParagraphParallels(
   ref: string
 ): Promise<ParagraphParallels> {
-  const url = `${API_HOST}/paragraphs/${encodeURIComponent(
+  const url = `${resolveApiHost()}/paragraphs/${encodeURIComponent(
     ref
   )}?include=bibleParallels,urantiaParallels`;
   const res = await fetch(url);
@@ -171,7 +204,7 @@ export async function searchParagraphs(
     partId?: string;
   } = {}
 ) {
-  const res = await fetch(`${API_HOST}/search`, {
+  const res = await fetch(`${resolveApiHost()}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
