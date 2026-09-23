@@ -11,6 +11,8 @@ import {
   mapTocToFlatNodes,
 } from "./mapper";
 import type {
+  ApiLanguage,
+  ApiLanguagesResponse,
   ApiPaperDetailResponse,
   ApiParagraphResponse,
   ApiParagraphWithParallelsResponse,
@@ -49,6 +51,17 @@ export function editionQuery(
 
 function apiUrl(path: string, lang?: string | null, source?: string | null) {
   return `${resolveApiHost()}${path}${editionQuery(lang, source)}`;
+}
+
+export async function fetchLanguages(): Promise<ApiLanguage[]> {
+  const res = await fetch(`${resolveApiHost()}/languages`);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch languages: ${res.status} ${res.statusText}`
+    );
+  }
+  const json: ApiLanguagesResponse = await res.json();
+  return json.data ?? [];
 }
 
 /**

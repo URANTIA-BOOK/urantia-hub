@@ -108,6 +108,34 @@ export type ApiSearchResult = ApiParagraph & {
   rank: number;
 };
 
+export type ApiTranslationSource = {
+  id: string;
+  treeSlug: string;
+  editionEnglish: string | null;
+  editionNative: string | null;
+  bookTitle: string | null;
+  regionCode: string | null;
+  versionNumber: string | null;
+  firstPublished: number | null;
+  isPrimary: boolean;
+  paragraphCount: number;
+};
+
+export type ApiLanguage = {
+  code: string;
+  slug: string;
+  bcp47: string;
+  name: string;
+  uiLabel: string;
+  uiLabelEnglish: string;
+  paragraphCount: number;
+  sources: ApiTranslationSource[];
+};
+
+export type ApiLanguagesResponse = {
+  data: ApiLanguage[];
+};
+
 // POST /search response
 export type ApiSearchResponse = {
   data: ApiSearchResult[];

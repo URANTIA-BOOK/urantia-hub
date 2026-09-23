@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 // Relative modules.
+import { LanguageSelect } from "@/components/LanguageSelect";
 import PaperNavbar from "@/components/PaperNavbar";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { useEffect, useState } from "react";
@@ -87,6 +88,7 @@ const Navbar = ({
           playbackRate={playbackRate}
         />
 
+        <LanguageSelect />
         <div className="flex items-center justify-around w-full max-w-sm pt-1 pb-2">
           <Link
             className={`flex-1 flex flex-col items-center text-xs text-center ${

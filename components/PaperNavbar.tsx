@@ -1,5 +1,6 @@
 // Node modules.
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import Link from "next/link";
 
 interface PaperNavbarProps {
@@ -27,6 +28,7 @@ const PaperNavbar = ({
   setPlaybackRate,
   playbackRate,
 }: PaperNavbarProps) => {
+  const { language, source } = useReadingLanguage();
   if (paperId === undefined) return null;
   if (!paperTitle) return null;
 
@@ -46,9 +48,12 @@ const PaperNavbar = ({
           <Link
             aria-label="Previous paper"
             className="px-2 py-2 text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(
-              paperId - 1 === -1 ? "0" : `${paperId - 1}`
-            )}`}
+            href={paperHref(
+              paperId - 1 === -1 ? "0" : `${paperId - 1}`,
+              null,
+              language,
+              source
+            )}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -66,9 +71,12 @@ const PaperNavbar = ({
           <Link
             aria-label="Next paper"
             className="px-2 py-2 flex text-right justify-end text-gray-400 hover:text-gray-600 dark:text-white hover:dark:text-white transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(
-              paperId + 1 <= 196 ? `${paperId + 1}` : "196"
-            )}`}
+            href={paperHref(
+              paperId + 1 <= 196 ? `${paperId + 1}` : "196",
+              null,
+              language,
+              source
+            )}
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path

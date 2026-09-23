@@ -3,6 +3,7 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import { LanguageSelect } from "./LanguageSelect";
 import LogoSymbol from "./LogoSymbol";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { MenuIcon } from "lucide-react";
@@ -97,6 +98,7 @@ const HomepageNavbar = ({
           </Link>
           <LogoSymbol className="flex-1 text-white h-6 w-6 md:h-8 md:w-8" />
           <div className="flex-1 flex justify-end text-base">
+            <LanguageSelect />
             {/* A plain anchor, not next/link: the href is an API route that 307s,
                 and a client-side transition to it renders the target page with
                 empty props. */}

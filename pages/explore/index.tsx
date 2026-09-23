@@ -7,7 +7,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import { getPaperIdFromGlobalId } from "@/utils/node";
 
 // Define the structure of the data you expect from the API
@@ -48,6 +49,7 @@ type TOCPageProps = {
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
 const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+  const { language, source } = useReadingLanguage();
   // Hooks.
   const { status } = useSession();
 
@@ -334,9 +336,12 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={quote.globalId}
-                            href={`/papers/${paperIdToUrl(
-                              `${quote.paperId}`
-                            )}#${quote.globalId}`}
+                            href={paperHref(
+                              `${quote.paperId}`,
+                              quote.globalId,
+                              language,
+                              source
+                            )}
                             className="relative flex flex-col items-start text-left px-6 pt-5 pb-10 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             {/* Paper Info */}
@@ -416,7 +421,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             key={paper.globalId}
                           >
                             <div className="flex flex-col w-full">
@@ -487,7 +492,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
@@ -553,7 +558,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
@@ -613,7 +618,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
@@ -673,7 +678,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
@@ -745,9 +750,12 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           return (
                             <Link
                               key={paper.globalId}
-                              href={`/papers/${paperIdToUrl(
-                                `${paper.paperId}`
-                              )}`}
+                              href={paperHref(
+                                `${paper.paperId}`,
+                                null,
+                                language,
+                                source
+                              )}
                               className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                             >
                               <div className="flex flex-col w-full">

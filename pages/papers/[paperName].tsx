@@ -40,7 +40,9 @@ import {
   getValidPaperUrls,
   paperIdToUrl,
 } from "@/utils/paperFormatters";
-import { fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import type { ParagraphParallels } from "@/libs/urantiaApi/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -78,12 +80,11 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
+  const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
+  const { language, source, ready: languageReady } = useReadingLanguage();
 
-  // Get the nodes from the paper data. Stay null-safe here: paperData can be
-  // undefined on a failed client-side navigation, and results can be empty when
-  // getStaticProps falls back after an API error. The real guard lives below,
-  // after all hooks have run (so we never call hooks conditionally).
-  const nodes = paperData?.data?.results ?? [];
+  const sourceNodes = paperData?.data?.results ?? [];
+  const nodes = overlayNodes ?? sourceNodes;
 
   // Get paper details.
   const firstNode = nodes[0];
@@ -125,6 +126,26 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   } = useAudioPlayer(nodes, markParagraphAsRead);
   const paperIdNumber = parseInt(paperId);
   const nextPaperId = paperIdNumber < 196 ? paperIdNumber + 1 : null;
+  const needsOverlay = languageReady && language !== "eng";
+
+  useEffect(() => {
+    if (!languageReady || !paperId) return;
+    if (language === "eng") {
+      setOverlayNodes(null);
+      return;
+    }
+    let cancelled = false;
+    fetchPaper(paperId, language, source)
+      .then((data) => {
+        if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setOverlayNodes(sourceNodes);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language, languageReady, paperId, source]);
 
   // Calculate nodes for modals.
   const explainNode = selectedGlobalIdExplain
@@ -221,10 +242,12 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     const topMostVisibleNode = findTopMostVisibleNode();
 
     // Set the callback URL.
-    let callbackUrl = `/papers/${paperIdToUrl(`${paperId}`)}`;
-    if (topMostVisibleNode) {
-      callbackUrl += `#${topMostVisibleNode.id}`;
-    }
+    const callbackUrl = paperHref(
+      `${paperId}`,
+      topMostVisibleNode?.id,
+      language,
+      source
+    );
 
     // Sign in.
     router.push(`/auth/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`);
@@ -361,7 +384,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
   // that getStaticProps returns when the upstream API call fails.
-  if (!nodes.length) {
+  if (!nodes.length || (needsOverlay && overlayNodes === null)) {
     return <Spinner />;
   }
 
@@ -905,7 +928,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
+              href={paperHref(`${nextPaperId}`, null, language, source)}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">
