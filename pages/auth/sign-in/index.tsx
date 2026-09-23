@@ -169,4 +169,6 @@ const SignInPage = () => {
   );
 };
 
+export { authOffReadRedirect as getServerSideProps } from "@/libs/authOffRedirect";
+
 export default SignInPage;
