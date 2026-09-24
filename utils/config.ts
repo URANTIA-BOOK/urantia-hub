@@ -620,3 +620,6 @@ export const YOUTUBE_VIDEO_IDS: Record<string, string> = {};
 // Reading
 // ===========================
 export const AVERAGE_READING_SPEED = 400; // Words per minute
+
+export const OPEN_SOURCE_PAPERS_URL = process.env.NEXT_PUBLIC_PAPERS_GITHUB_URL ||
+  "https://github.com/urantia-hub/urantia-data-sources/blob/main/languages/README.md";
