@@ -1,4 +1,5 @@
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import React, {
   createContext,
   useCallback,
@@ -11,6 +12,7 @@ import type { ApiLanguage } from "@/libs/urantiaApi/types";
 import {
   ENGLISH_LANG,
   isLanguageCode,
+  isSourceId,
   primarySourceId,
   readStoredReadingLanguage,
   readStoredReadingSource,
@@ -68,6 +70,7 @@ export function ReadingLanguageProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { status } = useSession();
   const [languages, setLanguages] = useState<readonly ReaderLangOption[]>([
     ENGLISH_LANG,
@@ -143,9 +146,28 @@ export function ReadingLanguageProvider({
     [apply, languages]
   );
 
+  const queryLang =
+    typeof router.query.lang === "string" ? router.query.lang : null;
+  const querySource =
+    typeof router.query.source === "string" ? router.query.source : null;
+  const shownLanguage = isLanguageCode(queryLang) ? queryLang : language;
+  const shownSource = isLanguageCode(queryLang)
+    ? resolveSourceId(
+        languages,
+        queryLang,
+        isSourceId(querySource) ? querySource : source
+      )
+    : source;
+
   return (
     <ReadingLanguageContext.Provider
-      value={{ languages, language, source, ready, setLanguage }}
+      value={{
+        languages,
+        language: shownLanguage,
+        source: shownSource,
+        ready,
+        setLanguage,
+      }}
     >
       {children}
     </ReadingLanguageContext.Provider>
