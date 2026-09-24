@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import Spinner from "@/components/Spinner";
 import { useReadingLanguage } from "@/context/readingLanguage";
+import { useEditionToc } from "@/hooks/useEditionToc";
 import { paperHref } from "@/libs/readingFlow";
 import { getPaperIdFromGlobalId } from "@/utils/node";
 
@@ -44,12 +45,20 @@ type CuratedQuote = {
 
 type TOCPageProps = {
   nodes?: TOCNode[];
+  servedEdition?: { lang?: string | null; source?: string | null };
 };
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
-  const { language, source } = useReadingLanguage();
+const ReadPage = ({ nodes: serverNodes = [], servedEdition }: TOCPageProps) => {
+  const { language, source, ready } = useReadingLanguage();
+  const nodes = useEditionToc(
+    serverNodes,
+    servedEdition,
+    language,
+    source,
+    ready
+  );
   // Hooks.
   const { status } = useSession();
 
@@ -211,7 +220,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
     if (status === "authenticated") {
       void onAuthenticated();
     }
-  }, [status]);
+  }, [status, nodes]);
 
   const getInProgressPapersForUser = (
     allPapers: TOCNode[],
