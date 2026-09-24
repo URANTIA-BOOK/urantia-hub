@@ -43,6 +43,7 @@ import {
 import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
 import { useReadingLanguage } from "@/context/readingLanguage";
 import { paperHref } from "@/libs/readingFlow";
+import { isLanguageCode, isSourceId } from "@/libs/readingLanguage";
 import type { ParagraphParallels } from "@/libs/urantiaApi/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -56,15 +57,21 @@ const notoSerifFont = Noto_Serif({
   weight: ["400", "700"],
 });
 
+type ServedEdition = {
+  lang: string;
+  source: string | null;
+};
+
 type PaperPageProps = {
   paperData: {
     data: {
       results: UBNode[];
     };
   };
+  servedEdition?: ServedEdition;
 };
 
-const PaperPage = ({ paperData }: PaperPageProps) => {
+const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
   // Hooks.
   const router = useRouter();
   const { status } = useSession();
@@ -81,25 +88,34 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
   const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
-  const { language, source, ready: languageReady } = useReadingLanguage();
-  const queryLang =
+  const { language, source, ready: languageReady, setLanguage } =
+    useReadingLanguage();
+  const urlLang =
     router.isReady && typeof router.query.lang === "string"
       ? router.query.lang
-      : "";
-  const querySource =
+      : null;
+  const urlSource =
     router.isReady && typeof router.query.source === "string"
       ? router.query.source
-      : "";
-  const editionLang = queryLang || language;
-  const editionSource = querySource || source;
+      : null;
 
   const sourceNodes = paperData?.data?.results ?? [];
-  const nodes = overlayNodes ?? sourceNodes;
+  const paperName =
+    typeof router.query.paperName === "string" ? router.query.paperName : "";
+  const routePaperId = paperName ? getPaperIdFromPaperUrl(paperName) : "";
+  const overlayPaperId = overlayNodes?.[0]?.paperId ?? "";
+  const overlayIsCurrent =
+    Boolean(overlayNodes) &&
+    (!routePaperId || overlayPaperId === routePaperId);
+  const nodes = overlayIsCurrent ? overlayNodes! : sourceNodes;
 
-  // Get paper details.
-  const firstNode = nodes[0];
-  const paperId = firstNode?.paperId ?? "";
-  const paperTitle = firstNode?.paperTitle ?? "";
+  // Get paper details from the route so client navigation cannot keep the
+  // previous paper's overlay as the identity of this page.
+  const paperId = routePaperId || nodes[0]?.paperId || "";
+  const paperTitle =
+    nodes.find((node) => node.paperId === paperId)?.paperTitle ??
+    nodes[0]?.paperTitle ??
+    "";
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -136,31 +152,51 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   } = useAudioPlayer(nodes, markParagraphAsRead);
   const paperIdNumber = parseInt(paperId);
   const nextPaperId = paperIdNumber < 196 ? paperIdNumber + 1 : null;
+  const serverHasEdition =
+    sourceNodes.length > 0 &&
+    sourceNodes[0]?.paperId === paperId &&
+    servedEdition?.lang === language &&
+    (language === "eng" ||
+      !source ||
+      servedEdition.source === source);
   const needsOverlay =
-    languageReady && router.isReady && editionLang !== "eng";
+    languageReady && router.isReady && language !== "eng" && !serverHasEdition;
+
+  useEffect(() => {
+    if (!languageReady || !router.isReady) return;
+    if (!isLanguageCode(urlLang)) return;
+    setLanguage(urlLang, isSourceId(urlSource) ? urlSource : undefined);
+  }, [languageReady, router.isReady, setLanguage, urlLang, urlSource]);
 
   useEffect(() => {
     if (!languageReady || !router.isReady || !paperId) return;
-    if (editionLang === "eng") {
+    if (language === "eng" || serverHasEdition) {
       setOverlayNodes(null);
       return;
     }
     let cancelled = false;
-    fetchPaper(paperId, editionLang, editionSource)
+    setOverlayNodes(null);
+    fetchPaper(paperId, language, source)
       .then((data) => {
         if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
       })
       .catch((error) => {
-        console.error(
-          `[paper] overlay failed for lang=${editionLang}:`,
-          error
-        );
+        console.error(`[paper] overlay failed for lang=${language}:`, error);
         if (!cancelled) setOverlayNodes(sourceNodes);
       });
     return () => {
       cancelled = true;
     };
-  }, [editionLang, editionSource, languageReady, paperId, router.isReady]);
+  }, [
+    language,
+    languageReady,
+    paperData,
+    paperId,
+    router.isReady,
+    serverHasEdition,
+    source,
+    sourceNodes,
+  ]);
 
   // Calculate nodes for modals.
   const explainNode = selectedGlobalIdExplain
@@ -260,8 +296,8 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     const callbackUrl = paperHref(
       `${paperId}`,
       topMostVisibleNode?.id,
-      editionLang,
-      editionSource
+      language,
+      source
     );
 
     // Sign in.
@@ -943,7 +979,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={paperHref(`${nextPaperId}`, null, editionLang, editionSource)}
+              href={paperHref(`${nextPaperId}`, null, language, source)}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -1057,6 +1093,7 @@ export async function getStaticProps(context: any) {
   return {
     props: {
       paperData,
+      servedEdition: { lang: "eng", source: null },
     },
   };
 }
