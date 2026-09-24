@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { User } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 // Relative modules.
+import { isAuthEnabled } from "@/libs/authEnabled";
 import UserService from "@/services/user";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -14,6 +15,12 @@ const getSessionDetails = async (
   res: NextApiResponse,
   options?: { isAdmin?: boolean; skipUnauthorized?: boolean }
 ): Promise<{ session: Session; user: User } | undefined> => {
+  if (!isAuthEnabled()) {
+    if (!options?.skipUnauthorized)
+      res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
   const session = await getServerSession(req, res, authOptions);
   if (!session?.user?.email) {
     if (!options?.skipUnauthorized)

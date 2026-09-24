@@ -4,6 +4,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import LogoSymbol from "./LogoSymbol";
+import { useHasAuthProvider } from "@/hooks/useHasAuthProvider";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { MenuIcon } from "lucide-react";
 
@@ -14,6 +15,7 @@ const HomepageNavbar = ({
 }) => {
   // Hooks.
   const { status } = useSession();
+  const hasAuthProvider = useHasAuthProvider();
 
   // Router.
   const router = useRouter();
@@ -115,7 +117,7 @@ const HomepageNavbar = ({
                 <MenuIcon className="w-6 h-6" />
               </Link>
             )}
-            {status === "unauthenticated" && (
+            {status === "unauthenticated" && hasAuthProvider && (
               <button
                 className="border-0 p-0 bg-transparent text-right hover:no-underline text-white hover:text-white/80 transition-colors duration-200"
                 onClick={() => {

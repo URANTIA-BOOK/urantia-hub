@@ -35,4 +35,6 @@ const SignOutPage = () => {
   );
 };
 
+export { authOffReadRedirect as getServerSideProps } from "@/libs/authOffRedirect";
+
 export default SignOutPage;
