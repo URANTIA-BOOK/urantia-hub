@@ -1024,6 +1024,7 @@ export async function getServerSideProps(context: any) {
   return {
     props: {
       paperData,
+      servedEdition: { lang, source: source ?? null },
     },
   };
 }

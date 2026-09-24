@@ -7,7 +7,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import { paperLabels } from "@/utils/paperLabels";
-import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 
 // Define the structure of the data you expect from the API
@@ -257,13 +256,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
       <Navbar />
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl">
-        {status === "loading" ? (
-          <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
-            <Spinner />
-          </div>
-        ) : (
-          <>
+        <>
             <div className="mt-4 mb-4 text-center">
               <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
 
@@ -316,8 +309,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
             {/* Render parts and papers */}
             {foreword && renderNode(foreword)}
             {sortedNodes.map((node) => renderNode(node))}
-          </>
-        )}
+        </>
       </main>
       <Footer />
     </div>
