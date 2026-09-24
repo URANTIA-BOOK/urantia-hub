@@ -43,7 +43,6 @@ import {
 import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
 import { useReadingLanguage } from "@/context/readingLanguage";
 import { paperHref } from "@/libs/readingFlow";
-import { isLanguageCode, isSourceId } from "@/libs/readingLanguage";
 import type { ParagraphParallels } from "@/libs/urantiaApi/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -111,16 +110,7 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
   const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
-  const { language, source, ready: languageReady, setLanguage } =
-    useReadingLanguage();
-  const urlLang =
-    router.isReady && typeof router.query.lang === "string"
-      ? router.query.lang
-      : null;
-  const urlSource =
-    router.isReady && typeof router.query.source === "string"
-      ? router.query.source
-      : null;
+  const { language, source, ready: languageReady } = useReadingLanguage();
 
   const sourceNodes = paperData?.data?.results ?? [];
   const paperName =
@@ -186,12 +176,6 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
     languageReady && router.isReady && Boolean(paperId) && !serverHasEdition;
 
   useEffect(() => {
-    if (!languageReady || !router.isReady) return;
-    if (!isLanguageCode(urlLang)) return;
-    setLanguage(urlLang, isSourceId(urlSource) ? urlSource : undefined);
-  }, [languageReady, router.isReady, setLanguage, urlLang, urlSource]);
-
-  useEffect(() => {
     if (!languageReady || !router.isReady || !paperId) return;
     if (serverHasEdition) {
       setOverlayNodes(null);
@@ -207,7 +191,6 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
       })
       .catch((error) => {
         console.error(`[paper] overlay failed for lang=${language}:`, error);
-        if (!cancelled) setOverlayNodes(sourceNodes);
       });
     return () => {
       cancelled = true;
@@ -220,7 +203,6 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
     router.isReady,
     serverHasEdition,
     source,
-    sourceNodes,
   ]);
 
   // Calculate nodes for modals.

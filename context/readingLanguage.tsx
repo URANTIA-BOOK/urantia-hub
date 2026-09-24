@@ -5,6 +5,8 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
 } from "react";
 import { fetchLanguages } from "@/libs/urantiaApi/client";
@@ -98,13 +100,24 @@ export function ReadingLanguageProvider({
     [languages, status]
   );
 
-  useEffect(() => {
+  // Read the edition before paint. A post-paint effect flashes English,
+  // then the stored language, and the page keeps the first copy.
+  useLayoutEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const queryLang = params.get("lang");
+    const querySource = params.get("source");
     const stored = readStoredReadingLanguage();
     const storedSource = readStoredReadingSource();
-    if (stored) {
-      setLanguageState(stored);
-      setSourceState(storedSource);
-      writeReadingCookies(stored, storedSource);
+    const next = isLanguageCode(queryLang) ? queryLang : stored;
+    const nextSource = isLanguageCode(queryLang)
+      ? isSourceId(querySource)
+        ? querySource
+        : storedSource
+      : storedSource;
+    if (next) {
+      setLanguageState(next);
+      setSourceState(next === "eng" ? null : nextSource);
+      writeReadingCookies(next, next === "eng" ? null : nextSource);
     }
     setReady(true);
   }, []);
@@ -150,21 +163,27 @@ export function ReadingLanguageProvider({
     typeof router.query.lang === "string" ? router.query.lang : null;
   const querySource =
     typeof router.query.source === "string" ? router.query.source : null;
-  const shownLanguage = isLanguageCode(queryLang) ? queryLang : language;
-  const shownSource = isLanguageCode(queryLang)
-    ? resolveSourceId(
-        languages,
-        queryLang,
-        isSourceId(querySource) ? querySource : source
-      )
-    : source;
+  const followedQuery = useRef<string | null>(null);
+
+  // Links and the back button carry the edition in the query. A click
+  // writes state before the URL updates, so this follows only a new query.
+  useEffect(() => {
+    if (!ready || !router.isReady) return;
+    const mark = isLanguageCode(queryLang)
+      ? `${queryLang}:${querySource ?? ""}`
+      : "";
+    if (followedQuery.current === mark) return;
+    followedQuery.current = mark;
+    if (!isLanguageCode(queryLang)) return;
+    apply(queryLang, isSourceId(querySource) ? querySource : null, false);
+  }, [apply, queryLang, querySource, ready, router.isReady]);
 
   return (
     <ReadingLanguageContext.Provider
       value={{
         languages,
-        language: shownLanguage,
-        source: shownSource,
+        language,
+        source,
         ready,
         setLanguage,
       }}
