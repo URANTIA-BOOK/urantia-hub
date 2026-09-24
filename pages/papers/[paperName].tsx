@@ -52,6 +52,29 @@ import { useModals } from "@/hooks/useModals";
 import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
 
+const SIGN_UP_COPY: Record<string, { lead: string; action: string }> = {
+  eng: {
+    lead: "Unlock handy features like bookmarking and notes.",
+    action: "Sign in or create an account",
+  },
+  es: {
+    lead: "Activa funciones útiles, como marcadores y notas.",
+    action: "Entra o crea una cuenta",
+  },
+  fr: {
+    lead: "Activez des fonctions pratiques, comme les signets et les notes.",
+    action: "Connectez-vous ou créez un compte",
+  },
+  de: {
+    lead: "Schalte praktische Funktionen wie Lesezeichen und Notizen frei.",
+    action: "Melde dich an oder erstelle ein Konto",
+  },
+};
+
+function signUpCopy(language: string) {
+  return SIGN_UP_COPY[language] ?? SIGN_UP_COPY.eng;
+}
+
 const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700"],
@@ -863,13 +886,13 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
         // purple box shadow
         <div className="z-10 fixed top-4 left-4 right-4 text-gray-600 bg-slate-50 dark:text-white dark:bg-neutral-900 p-4 rounded-lg text-sm pr-8 max-w-lg mx-auto fade-in shadow-lg shadow-purple-600/30 dark:shadow-purple-400/20">
           <p>
-            Unlock handy features like bookmarking and notes.{" "}
+            {signUpCopy(language).lead}{" "}
             <button
               className="text-sky-600 dark:text-sky-400 hover:underline p-0 m-0 border-none bg-transparent focus:outline-none"
               onClick={onSignUpClick}
               type="button"
             >
-              Sign in or create an account
+              {signUpCopy(language).action}
             </button>
           </p>
           <button

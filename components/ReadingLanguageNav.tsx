@@ -239,12 +239,26 @@ const ReadingLanguageNav = ({
   }, [detailSource, editionLang, open, previewSource, sheet]);
 
   const navigatePaper = (nextLanguage: string, nextSource?: string | null) => {
-    if (!paperId) return;
-    void router.replace(
-      paperHref(paperId, null, nextLanguage, nextSource),
-      undefined,
-      { shallow: true }
-    );
+    if (paperId) {
+      void router.replace(
+        paperHref(paperId, null, nextLanguage, nextSource),
+        undefined,
+        { shallow: true }
+      );
+      return;
+    }
+    const query = { ...router.query };
+    if (nextLanguage && nextLanguage !== "eng") {
+      query.lang = nextLanguage;
+      if (nextSource) query.source = nextSource;
+      else delete query.source;
+    } else {
+      delete query.lang;
+      delete query.source;
+    }
+    void router.replace({ pathname: router.pathname, query }, undefined, {
+      shallow: true,
+    });
   };
 
   const onSelectLanguage = (item: ReaderLangOption) => {
@@ -474,7 +488,7 @@ const ReadingLanguageNav = ({
       : null}
       {open && !sheet ? (
         <div
-          className="absolute right-0 top-full z-20 mt-2 flex items-start gap-2"
+          className="absolute right-0 top-full z-40 mt-2 flex items-start gap-2"
           onPointerDown={(event) => {
             pointerTypeRef.current = event.pointerType;
           }}
