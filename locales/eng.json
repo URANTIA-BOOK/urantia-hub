@@ -92,5 +92,38 @@
   "terms": "Terms",
   "cookies": "Cookies",
   "allRightsReserved": "All rights reserved.",
-  "allSystemsNormal": "All systems normal."
+  "allSystemsNormal": "All systems normal.",
+  "signUp": {
+    "lead": "Unlock handy features like bookmarking and notes.",
+    "action": "Sign in or create an account"
+  },
+  "catalog": {
+    "title": "The Urantia Papers",
+    "all": "All Papers",
+    "filterTopics": "Filter by Topics",
+    "hideFilters": "Hide Filters",
+    "foreword": "Foreword",
+    "paper": "Paper",
+    "part": "Part"
+  },
+  "discover": {
+    "featuredTitle": "Featured Passages",
+    "featuredBody": "Discover the context behind some of the most inspiring passages.",
+    "continueTitle": "Continue Your Journey",
+    "continueBody": "Pick up where you left off in your exploration of the papers.",
+    "mostReadTitle": "Most Read Papers",
+    "mostReadBody": "Discover the papers that readers frequently return to.",
+    "scienceTitle": "Science & Cosmology",
+    "scienceBody": "Explore fascinating perspectives on physics, astronomy, and the architecture of reality.",
+    "originsTitle": "Human Origins & Development",
+    "originsBody": "Uncover the story of humanity's biological and cultural evolution through the ages.",
+    "beyondTitle": "Life Beyond Earth",
+    "beyondBody": "Discover the adventure after mortal life and learn about the beings that help us through our journey."
+  },
+  "edition": {
+    "language": "Language",
+    "edit": "Edit edition",
+    "details": "Edition",
+    "use": "Use this edition"
+  }
 }

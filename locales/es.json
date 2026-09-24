@@ -92,5 +92,38 @@
   "terms": "Términos",
   "cookies": "Cookies",
   "allRightsReserved": "Todos los derechos reservados.",
-  "allSystemsNormal": "Todos los sistemas en orden."
+  "allSystemsNormal": "Todos los sistemas en orden.",
+  "signUp": {
+    "lead": "Activa funciones útiles, como marcadores y notas.",
+    "action": "Entra o crea una cuenta"
+  },
+  "catalog": {
+    "title": "Los Documentos de Urantia",
+    "all": "Todos los documentos",
+    "filterTopics": "Filtrar por temas",
+    "hideFilters": "Ocultar filtros",
+    "foreword": "Prólogo",
+    "paper": "Documento",
+    "part": "Parte"
+  },
+  "discover": {
+    "featuredTitle": "Pasajes destacados",
+    "featuredBody": "Descubre el contexto de algunos de los pasajes más inspiradores.",
+    "continueTitle": "Sigue tu camino",
+    "continueBody": "Retoma la lectura donde la dejaste.",
+    "mostReadTitle": "Documentos más leídos",
+    "mostReadBody": "Descubre los documentos a los que los lectores vuelven una y otra vez.",
+    "scienceTitle": "Ciencia y cosmología",
+    "scienceBody": "Explora perspectivas sobre física, astronomía y la arquitectura de la realidad.",
+    "originsTitle": "Orígenes y desarrollo humanos",
+    "originsBody": "Recorre la evolución biológica y cultural de la humanidad.",
+    "beyondTitle": "La vida más allá de la Tierra",
+    "beyondBody": "Descubre la aventura después de la vida mortal y a los seres que nos acompañan."
+  },
+  "edition": {
+    "language": "Idioma",
+    "edit": "Editar edición",
+    "details": "Edición",
+    "use": "Usar esta edición"
+  }
 }
