@@ -804,6 +804,7 @@ export async function getServerSideProps(context: any) {
   return {
     props: {
       nodes,
+      servedEdition: { lang: lang ?? "eng", source: source ?? null },
     },
   };
 }
