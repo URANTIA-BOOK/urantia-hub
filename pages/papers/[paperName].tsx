@@ -159,8 +159,8 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
     (language === "eng" ||
       !source ||
       servedEdition.source === source);
-  const needsOverlay =
-    languageReady && router.isReady && language !== "eng" && !serverHasEdition;
+  const needsClientFetch =
+    languageReady && router.isReady && Boolean(paperId) && !serverHasEdition;
 
   useEffect(() => {
     if (!languageReady || !router.isReady) return;
@@ -170,13 +170,15 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
 
   useEffect(() => {
     if (!languageReady || !router.isReady || !paperId) return;
-    if (language === "eng" || serverHasEdition) {
+    if (serverHasEdition) {
       setOverlayNodes(null);
       return;
     }
     let cancelled = false;
     setOverlayNodes(null);
-    fetchPaper(paperId, language, source)
+    const requestLang = language === "eng" ? null : language;
+    const requestSource = language === "eng" ? null : source;
+    fetchPaper(paperId, requestLang, requestSource)
       .then((data) => {
         if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
       })
@@ -435,7 +437,7 @@ const PaperPage = ({ paperData, servedEdition }: PaperPageProps) => {
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
   // that getStaticProps returns when the upstream API call fails.
-  if (!nodes.length || (needsOverlay && overlayNodes === null)) {
+  if (!nodes.length || (needsClientFetch && overlayNodes === null)) {
     return <Spinner />;
   }
 
