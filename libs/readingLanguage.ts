@@ -6,12 +6,22 @@ export const READING_SOURCE_COOKIE = "readingSource";
 export type ReaderSource = {
   id: string;
   label: string;
+  treeSlug?: string;
+  editionEnglish?: string | null;
+  editionNative?: string | null;
+  bookTitle?: string | null;
+  regionCode?: string | null;
+  versionNumber?: string | null;
+  firstPublished?: number | null;
   isPrimary: boolean;
 };
 
 export type ReaderLangOption = {
   code: string;
+  slug?: string;
+  bcp47?: string;
   label: string;
+  uiLabelEnglish?: string;
   sources: ReaderSource[];
 };
 
@@ -98,9 +108,104 @@ export function readCookieValue(
   return value || null;
 }
 
-export function primarySourceId(lang?: ReaderLangOption | null): string | null {
+export function primarySource(
+  lang?: ReaderLangOption | null
+): ReaderSource | undefined {
   const sources = lang?.sources ?? [];
-  return (sources.find((source) => source.isPrimary) ?? sources[0])?.id ?? null;
+  return sources.find((source) => source.isPrimary) ?? sources[0];
+}
+
+export function primarySourceId(lang?: ReaderLangOption | null): string | null {
+  return primarySource(lang)?.id ?? null;
+}
+
+export function resolveSource(
+  lang?: ReaderLangOption | null,
+  sourceId?: string | null
+): ReaderSource | undefined {
+  const sources = lang?.sources ?? [];
+  if (sourceId) {
+    const match = sources.find((source) => source.id === sourceId);
+    if (match) return match;
+  }
+  return primarySource(lang);
+}
+
+export function sourceStamp(source?: ReaderSource | null): string {
+  if (!source) return "";
+  const year =
+    typeof source.firstPublished === "number" && source.firstPublished > 0
+      ? `(${source.firstPublished})`
+      : "";
+  const version = source.versionNumber ? `v${source.versionNumber}` : "";
+  if (year && version) return `${year} | ${version}`;
+  return year || version;
+}
+
+export type SourceDetailCard = {
+  title: string | null;
+  tag: string | null;
+  edition: string | null;
+  year: number | null;
+  version: string | null;
+  id: string;
+};
+
+export function sourceDetailCard(
+  source?: ReaderSource | null
+): SourceDetailCard | null {
+  if (!source) return null;
+  const title = source.bookTitle?.trim() || source.label?.trim() || null;
+  const tag = source.editionNative?.trim() || null;
+  const edition = source.editionEnglish?.trim() || null;
+  return {
+    title,
+    tag: tag && tag !== title ? tag : null,
+    edition: edition && edition !== title && edition !== tag ? edition : null,
+    year:
+      typeof source.firstPublished === "number" && source.firstPublished > 0
+        ? source.firstPublished
+        : null,
+    version: source.versionNumber?.trim() || null,
+    id: source.id,
+  };
+}
+
+export function isHoverPointer(pointerType?: string | null): boolean {
+  return pointerType !== "touch";
+}
+
+export function languageRowAction(input: {
+  hasEditions: boolean;
+  pointerType?: string | null;
+  revealed: boolean;
+  detailsInline?: boolean;
+}): "reveal" | "activate" {
+  if (
+    input.hasEditions &&
+    !input.revealed &&
+    (input.detailsInline || !isHoverPointer(input.pointerType))
+  ) {
+    return "reveal";
+  }
+  return "activate";
+}
+
+export function editionRowAction(
+  pointerType?: string | null,
+  detailsVisible = false
+): "preview" | "activate" {
+  if (detailsVisible) return "activate";
+  return isHoverPointer(pointerType) ? "activate" : "preview";
+}
+
+export function pickerSurface(input: {
+  finePointer: boolean;
+  wide: boolean;
+  hoverPanes?: boolean;
+}): "popover" | "sheet" {
+  if (input.hoverPanes === false) return "sheet";
+  return input.finePointer && input.wide ? "popover" : "sheet";
 }
 
 export function resolveSourceId(

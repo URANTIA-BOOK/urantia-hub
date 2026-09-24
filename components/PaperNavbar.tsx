@@ -38,7 +38,7 @@ const PaperNavbar = ({
     <div
       className={`flex items-center ${
         audioIsPlaying ? "justify-center" : "justify-between"
-      } w-full max-w-3xl mt-1 mb-6`}
+      } w-full`}
     >
       {!audioIsPlaying && (
         <div

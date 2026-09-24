@@ -40,18 +40,26 @@ const ReadingLanguageContext = createContext<ReadingLanguageContextValue>({
 function toOption(item: ApiLanguage): ReaderLangOption {
   return {
     code: item.code,
+    slug: item.slug,
+    bcp47: item.bcp47,
     label: item.uiLabel || item.name || item.code,
-    sources: (item.sources ?? [])
-      .filter((source) => item.code === "eng" || source.paragraphCount > 0)
-      .map((source) => ({
-        id: source.id,
-        label:
-          source.editionNative ||
-          source.editionEnglish ||
-          source.bookTitle ||
-          source.id,
-        isPrimary: source.isPrimary,
-      })),
+    uiLabelEnglish: item.uiLabelEnglish,
+    sources: (item.sources ?? []).map((source) => ({
+      id: source.id,
+      label:
+        source.editionNative ||
+        source.editionEnglish ||
+        source.bookTitle ||
+        source.id,
+      treeSlug: source.treeSlug,
+      editionEnglish: source.editionEnglish,
+      editionNative: source.editionNative,
+      bookTitle: source.bookTitle,
+      regionCode: source.regionCode,
+      versionNumber: source.versionNumber,
+      firstPublished: source.firstPublished,
+      isPrimary: source.isPrimary,
+    })),
   };
 }
 
@@ -103,9 +111,7 @@ export function ReadingLanguageProvider({
     fetchLanguages()
       .then((rows) => {
         if (cancelled) return;
-        const options = rows
-          .filter((item) => item.code === "eng" || item.paragraphCount > 0)
-          .map(toOption);
+        const options = rows.map(toOption);
         setLanguages(options.length ? options : [ENGLISH_LANG]);
         setCatalogReady(true);
       })
