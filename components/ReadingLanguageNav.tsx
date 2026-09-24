@@ -1,6 +1,7 @@
 import { Calendar, Check, ChevronLeft, ChevronRight, Globe, Pencil, Tag } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Modal from "@/components/Modal";
 import { useReadingLanguage } from "@/context/readingLanguage";
 import { paperHref } from "@/libs/readingFlow";
@@ -434,7 +435,8 @@ const ReadingLanguageNav = ({
   return (
     <div className="relative z-20" ref={rootRef}>
       {trigger}
-      {open && sheet ? (
+      {open && sheet && typeof document !== "undefined"
+        ? createPortal(
         <Modal onClose={closePicker}>
           <div className="flex max-h-[85vh] min-h-0 flex-col px-2 pb-3 pt-3">
             <div className="mb-2 flex shrink-0 items-center gap-1 pr-12">
@@ -466,8 +468,10 @@ const ReadingLanguageNav = ({
               {editionItem ? editionRows : languageRows}
             </div>
           </div>
-        </Modal>
-      ) : null}
+        </Modal>,
+        document.body
+        )
+      : null}
       {open && !sheet ? (
         <div
           className="absolute right-0 top-full z-20 mt-2 flex items-start gap-2"
