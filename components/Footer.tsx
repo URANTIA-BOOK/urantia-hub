@@ -1,5 +1,6 @@
 // Node modules.
 import Link from "next/link";
+import { OPEN_SOURCE_PAPERS_URL } from "@/utils/config";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { useSession } from "next-auth/react";
 
@@ -70,7 +71,7 @@ const Footer = ({ marginBottom }: { marginBottom?: string }) => {
               <li>
                 <Link
                   className="text-gray-400 hover:text-blue-400 transition-colors duration-300 hover:no-underline"
-                  href="https://github.com/urantia-hub/data"
+                  href={OPEN_SOURCE_PAPERS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
