@@ -1,3 +1,5 @@
+import { useUiCopy } from "@/libs/uiCopy";
+
 export type CommunityFeature = {
   title: string;
   description: string;
@@ -11,7 +13,9 @@ export const CommunityFeature = ({
   icon: Icon,
   title,
   description,
-}: any) => (
+}: any) => {
+  const copy = useUiCopy();
+  return (
   <div
     className="group relative bg-white p-8 rounded-2xl transition-all duration-300
     hover:shadow-xl hover:-translate-y-1 border border-slate-200"
@@ -21,7 +25,7 @@ export const CommunityFeature = ({
         className="absolute top-2 md:top-3 -right-5 md:right-3 px-3 py-1 bg-orange-500 text-white text-sm font-medium rounded-full
       shadow-lg shadow-emerald-500/20 rotate-12 md:rotate-0"
       >
-        COMING SOON
+        {copy.comingSoon}
       </div>
     )}
 
@@ -36,6 +40,7 @@ export const CommunityFeature = ({
       <p className="text-slate-600 leading-relaxed">{description}</p>
     </div>
   </div>
-);
+  );
+};
 
 export default CommunityFeature;
