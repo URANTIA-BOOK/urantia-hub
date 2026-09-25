@@ -6,6 +6,9 @@ import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { useEditionToc } from "@/hooks/useEditionToc";
+import { paperHref } from "@/libs/readingFlow";
 import { paperLabels } from "@/utils/paperLabels";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 
@@ -23,11 +26,20 @@ type TOCNode = {
 
 type TOCPageProps = {
   nodes?: TOCNode[];
+  servedEdition?: { lang?: string | null; source?: string | null };
 };
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: serverNodes = [], servedEdition }: TOCPageProps) => {
+  const { language, source, ready } = useReadingLanguage();
+  const nodes = useEditionToc(
+    serverNodes,
+    servedEdition,
+    language,
+    source,
+    ready
+  );
   // Hooks.
   const { status } = useSession();
 
@@ -155,7 +167,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                 return (
                   <Link
                     className="relative flex flex-col justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                    href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                    href={paperHref(`${paper.paperId}`, null, language, source)}
                     key={paper.globalId}
                   >
                     <div className="flex flex-col">
@@ -208,7 +220,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
               <Link
                 className="relative block px-4 py-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                href={`/papers/${paperIdToUrl(`${currentNode.paperId}`)}`}
+                href={paperHref(`${currentNode.paperId}`, null, language, source)}
               >
                 <span className="text-xs text-gray-400">Foreword</span>
                 <h3 className="text-lg font-bold text-gray-600 dark:text-white">
