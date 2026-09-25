@@ -92,5 +92,38 @@
   "terms": "Conditions",
   "cookies": "Cookies",
   "allRightsReserved": "Tous droits réservés.",
-  "allSystemsNormal": "Tous les systèmes sont en ordre."
+  "allSystemsNormal": "Tous les systèmes sont en ordre.",
+  "signUp": {
+    "lead": "Activez des fonctions pratiques, comme les signets et les notes.",
+    "action": "Connectez-vous ou créez un compte"
+  },
+  "catalog": {
+    "title": "Les Fascicules d'Urantia",
+    "all": "Tous les fascicules",
+    "filterTopics": "Filtrer par thèmes",
+    "hideFilters": "Masquer les filtres",
+    "foreword": "Avant-propos",
+    "paper": "Fascicule",
+    "part": "Partie"
+  },
+  "discover": {
+    "featuredTitle": "Passages choisis",
+    "featuredBody": "Découvrez le contexte de quelques-uns des passages les plus inspirants.",
+    "continueTitle": "Poursuivez votre lecture",
+    "continueBody": "Reprenez là où vous vous étiez arrêté.",
+    "mostReadTitle": "Fascicules les plus lus",
+    "mostReadBody": "Découvrez les fascicules vers lesquels les lecteurs reviennent souvent.",
+    "scienceTitle": "Science et cosmologie",
+    "scienceBody": "Explorez des perspectives sur la physique, l'astronomie et l'architecture de la réalité.",
+    "originsTitle": "Origines et développement humains",
+    "originsBody": "Parcourez l'évolution biologique et culturelle de l'humanité.",
+    "beyondTitle": "La vie au-delà de la Terre",
+    "beyondBody": "Découvrez l'aventure après la vie mortelle et les êtres qui nous accompagnent."
+  },
+  "edition": {
+    "language": "Langue",
+    "edit": "Modifier l'édition",
+    "details": "Édition",
+    "use": "Utiliser cette édition"
+  }
 }

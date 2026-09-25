@@ -92,5 +92,38 @@
   "terms": "Bedingungen",
   "cookies": "Cookies",
   "allRightsReserved": "Alle Rechte vorbehalten.",
-  "allSystemsNormal": "Alle Systeme in Ordnung."
+  "allSystemsNormal": "Alle Systeme in Ordnung.",
+  "signUp": {
+    "lead": "Schalte praktische Funktionen wie Lesezeichen und Notizen frei.",
+    "action": "Melde dich an oder erstelle ein Konto"
+  },
+  "catalog": {
+    "title": "Die Urantia-Schriften",
+    "all": "Alle Schriften",
+    "filterTopics": "Nach Themen filtern",
+    "hideFilters": "Filter ausblenden",
+    "foreword": "Vorwort",
+    "paper": "Schrift",
+    "part": "Teil"
+  },
+  "discover": {
+    "featuredTitle": "Ausgewählte Stellen",
+    "featuredBody": "Entdecke den Zusammenhang einiger der inspirierendsten Stellen.",
+    "continueTitle": "Lies weiter",
+    "continueBody": "Setze dort fort, wo du aufgehört hast.",
+    "mostReadTitle": "Meistgelesene Schriften",
+    "mostReadBody": "Entdecke die Schriften, zu denen Leser immer wieder zurückkehren.",
+    "scienceTitle": "Wissenschaft und Kosmologie",
+    "scienceBody": "Erkunde Perspektiven zu Physik, Astronomie und dem Aufbau der Wirklichkeit.",
+    "originsTitle": "Menschliche Ursprünge und Entwicklung",
+    "originsBody": "Verfolge die biologische und kulturelle Entwicklung der Menschheit.",
+    "beyondTitle": "Das Leben jenseits der Erde",
+    "beyondBody": "Entdecke das Abenteuer nach dem sterblichen Leben und die Wesen, die uns begleiten."
+  },
+  "edition": {
+    "language": "Sprache",
+    "edit": "Ausgabe bearbeiten",
+    "details": "Ausgabe",
+    "use": "Diese Ausgabe verwenden"
+  }
 }

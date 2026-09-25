@@ -12,8 +12,17 @@ export function getUiCopy(language: string): UiCopy {
   return COPY[language] ?? COPY.eng;
 }
 
+function leafKeys(value: unknown, prefix = ""): string[] {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return Object.entries(value as Record<string, unknown>).flatMap(
+      ([key, child]) => leafKeys(child, prefix ? `${prefix}.${key}` : key)
+    );
+  }
+  return [prefix];
+}
+
 export function localeKeys(language = "eng"): string[] {
-  return Object.keys(getUiCopy(language)).sort();
+  return leafKeys(getUiCopy(language)).sort();
 }
 
 /** UI copy follows the single reading-language context owned by the app. */
