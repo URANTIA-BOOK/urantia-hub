@@ -40,7 +40,9 @@ import {
   getValidPaperUrls,
   paperIdToUrl,
 } from "@/utils/paperFormatters";
-import { fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import type { ApiLanguage, ParagraphParallels } from "@/libs/urantiaApi/types";
 import type { EditionLink } from "@/libs/editionRequest";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -50,10 +52,38 @@ import { useModals } from "@/hooks/useModals";
 import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
 
+const SIGN_UP_COPY: Record<string, { lead: string; action: string }> = {
+  eng: {
+    lead: "Unlock handy features like bookmarking and notes.",
+    action: "Sign in or create an account",
+  },
+  es: {
+    lead: "Activa funciones útiles, como marcadores y notas.",
+    action: "Entra o crea una cuenta",
+  },
+  fr: {
+    lead: "Activez des fonctions pratiques, comme les signets et les notes.",
+    action: "Connectez-vous ou créez un compte",
+  },
+  de: {
+    lead: "Schalte praktische Funktionen wie Lesezeichen und Notizen frei.",
+    action: "Melde dich an oder erstelle ein Konto",
+  },
+};
+
+function signUpCopy(language: string) {
+  return SIGN_UP_COPY[language] ?? SIGN_UP_COPY.eng;
+}
+
 const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700"],
 });
+
+type ServedEdition = {
+  lang: string;
+  source: string | null;
+};
 
 type PaperPageProps = {
   paperData: {
@@ -87,12 +117,18 @@ const PaperPage = ({
 
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
+  const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
+  const { language, source, ready: languageReady } = useReadingLanguage();
 
-  // Get the nodes from the paper data. Stay null-safe here: paperData can be
-  // undefined on a failed client-side navigation, and results can be empty when
-  // getStaticProps falls back after an API error. The real guard lives below,
-  // after all hooks have run (so we never call hooks conditionally).
-  const nodes = paperData?.data?.results ?? [];
+  const sourceNodes = paperData?.data?.results ?? [];
+  const paperName =
+    typeof router.query.paperName === "string" ? router.query.paperName : "";
+  const routePaperId = paperName ? getPaperIdFromPaperUrl(paperName) : "";
+  const overlayPaperId = overlayNodes?.[0]?.paperId ?? "";
+  const overlayIsCurrent =
+    Boolean(overlayNodes) &&
+    (!routePaperId || overlayPaperId === routePaperId);
+  const nodes = overlayIsCurrent ? overlayNodes! : sourceNodes;
 
   // Get paper details.
   const firstNode = nodes[0];
@@ -148,6 +184,45 @@ const PaperPage = ({
     skipToPreviousParagraph,
   } = useAudioPlayer(nodes, markParagraphAsRead);
   const nextPaperId = paperIdNumber < 196 ? paperIdNumber + 1 : null;
+  const serverHasEdition =
+    sourceNodes.length > 0 &&
+    sourceNodes[0]?.paperId === paperId &&
+    servedEdition?.lang === language &&
+    (language === "eng" ||
+      !source ||
+      servedEdition.source === source);
+  const needsClientFetch =
+    languageReady && router.isReady && Boolean(paperId) && !serverHasEdition;
+
+  useEffect(() => {
+    if (!languageReady || !router.isReady || !paperId) return;
+    if (serverHasEdition) {
+      setOverlayNodes(null);
+      return;
+    }
+    let cancelled = false;
+    setOverlayNodes(null);
+    const requestLang = language === "eng" ? null : language;
+    const requestSource = language === "eng" ? null : source;
+    fetchPaper(paperId, requestLang, requestSource)
+      .then((data) => {
+        if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
+      })
+      .catch((error) => {
+        console.error(`[paper] overlay failed for lang=${language}:`, error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    language,
+    languageReady,
+    paperData,
+    paperId,
+    router.isReady,
+    serverHasEdition,
+    source,
+  ]);
 
   // Calculate nodes for modals.
   const explainNode = selectedGlobalIdExplain
@@ -244,10 +319,12 @@ const PaperPage = ({
     const topMostVisibleNode = findTopMostVisibleNode();
 
     // Set the callback URL.
-    let callbackUrl = `/papers/${paperIdToUrl(`${paperId}`)}`;
-    if (topMostVisibleNode) {
-      callbackUrl += `#${topMostVisibleNode.id}`;
-    }
+    const callbackUrl = paperHref(
+      `${paperId}`,
+      topMostVisibleNode?.id,
+      language,
+      source
+    );
 
     // Sign in.
     router.push(`/auth/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`);
@@ -803,13 +880,13 @@ const PaperPage = ({
         // purple box shadow
         <div className="z-10 fixed top-4 left-4 right-4 text-gray-600 bg-slate-50 dark:text-white dark:bg-neutral-900 p-4 rounded-lg text-sm pr-8 max-w-lg mx-auto fade-in shadow-lg shadow-purple-600/30 dark:shadow-purple-400/20">
           <p>
-            Unlock handy features like bookmarking and notes.{" "}
+            {signUpCopy(language).lead}{" "}
             <button
               className="text-sky-600 dark:text-sky-400 hover:underline p-0 m-0 border-none bg-transparent focus:outline-none"
               onClick={onSignUpClick}
               type="button"
             >
-              Sign in or create an account
+              {signUpCopy(language).action}
             </button>
           </p>
           <button
@@ -921,7 +998,7 @@ const PaperPage = ({
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
+              href={paperHref(`${nextPaperId}`, null, language, source)}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">

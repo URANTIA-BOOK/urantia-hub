@@ -1,3 +1,9 @@
+import { editionQuery } from "@/libs/urantiaApi/client";
+import {
+  readStoredReadingLanguage,
+  readStoredReadingSource,
+} from "@/libs/readingLanguage";
+
 /**
  * Constructs the Read link URL based on authentication status.
  * If unauthenticated, it attempts to retrieve the last visited node from localStorage.
@@ -7,12 +13,23 @@
 export const deriveReadLink = (
   status: "authenticated" | "loading" | "unauthenticated"
 ): string => {
+  const edition = editionQuery(
+    readStoredReadingLanguage(),
+    readStoredReadingSource()
+  );
+  const withEdition = (href: string) => {
+    if (!edition) return href;
+    return href.includes("?")
+      ? `${href}&${edition.slice(1)}`
+      : `${href}${edition}`;
+  };
+
   if (status === "loading") {
-    return "/api/redirect/user/read"; // Loading link
+    return withEdition("/api/redirect/user/read");
   }
 
   if (status === "authenticated") {
-    return "/api/redirect/user/read"; // Authenticated user link
+    return withEdition("/api/redirect/user/read");
   }
 
   if (status === "unauthenticated") {
@@ -21,11 +38,12 @@ export const deriveReadLink = (
       : null;
 
     if (lastVisitedNode) {
-      return `/api/redirect/user/read?paperId=${lastVisitedNode.paperId}&globalId=${lastVisitedNode.globalId}`;
-    } else {
-      return "/api/redirect/user/read";
+      return withEdition(
+        `/api/redirect/user/read?paperId=${lastVisitedNode.paperId}&globalId=${lastVisitedNode.globalId}`
+      );
     }
+    return withEdition("/api/redirect/user/read");
   }
 
-  return "/api/redirect/user/read";
+  return withEdition("/api/redirect/user/read");
 };
