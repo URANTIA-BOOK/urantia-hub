@@ -51,4 +51,4 @@ COPY --from=builder /app/sentry.server.config.ts ./
 COPY --from=builder /app/sentry.edge.config.ts ./
 COPY --from=builder /app/instrumentation.ts ./
 EXPOSE 3001
-CMD ["sh", "-c", "exec yarn start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && exec yarn start"]
