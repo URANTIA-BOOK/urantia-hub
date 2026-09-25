@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 // Relative modules.
 import PaperNavbar from "@/components/PaperNavbar";
+import ReadingLanguageNav from "@/components/ReadingLanguageNav";
 import { useHasAuthProvider } from "@/hooks/useHasAuthProvider";
 import { useUiCopy } from "@/libs/uiCopy";
 import { deriveReadLink } from "@/utils/readPaperLink";
@@ -78,18 +79,26 @@ const Navbar = ({
           hidden ? "translate-y-16" : "translate-y-0"
         } transition-transform duration-300 ease-in-out`}
       >
-        <PaperNavbar
-          audioContent={audioContent}
-          audioOnPlay={audioOnPlay}
-          audioIsPlaying={audioIsPlaying}
-          paperId={paperId}
-          paperTitle={paperTitle}
-          showAudio={showAudio}
-          skipToNextParagraph={skipToNextParagraph}
-          skipToPreviousParagraph={skipToPreviousParagraph}
-          setPlaybackRate={setPlaybackRate}
-          playbackRate={playbackRate}
-        />
+        <div className="mb-6 mt-1 flex w-full max-w-3xl items-center gap-2">
+          <ReadingLanguageNav
+            paperId={paperId === undefined ? undefined : String(paperId)}
+            variant="fab"
+          />
+          <div className="min-w-0 flex-1">
+            <PaperNavbar
+              audioContent={audioContent}
+              audioOnPlay={audioOnPlay}
+              audioIsPlaying={audioIsPlaying}
+              paperId={paperId}
+              paperTitle={paperTitle}
+              showAudio={showAudio}
+              skipToNextParagraph={skipToNextParagraph}
+              skipToPreviousParagraph={skipToPreviousParagraph}
+              setPlaybackRate={setPlaybackRate}
+              playbackRate={playbackRate}
+            />
+          </div>
+        </div>
 
         <div className="flex items-center justify-around w-full max-w-sm pt-1 pb-2">
           <Link
