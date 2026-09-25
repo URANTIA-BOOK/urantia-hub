@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import LogoSymbol from "./LogoSymbol";
 import { useHasAuthProvider } from "@/hooks/useHasAuthProvider";
+import { useUiCopy } from "@/libs/uiCopy";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { MenuIcon } from "lucide-react";
 
@@ -16,6 +17,7 @@ const HomepageNavbar = ({
   // Hooks.
   const { status } = useSession();
   const hasAuthProvider = useHasAuthProvider();
+  const copy = useUiCopy();
 
   // Router.
   const router = useRouter();
@@ -106,7 +108,7 @@ const HomepageNavbar = ({
               className="text-center hover:no-underline mr-4 text-white hover:text-white/80 transition-colors duration-200"
               href={continueReadingLink}
             >
-              Read
+              {copy.read}
             </a>
             {status === "authenticated" && (
               <Link
@@ -125,7 +127,7 @@ const HomepageNavbar = ({
                   onResetState();
                 }}
               >
-                Sign In
+                {copy.signIn}
               </button>
             )}
           </div>
