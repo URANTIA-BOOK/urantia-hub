@@ -108,6 +108,39 @@ export type ApiSearchResult = ApiParagraph & {
   rank: number;
 };
 
+export type ApiTranslationSource = {
+  id: string;
+  treeSlug?: string;
+  editionEnglish?: string | null;
+  editionNative?: string | null;
+  bookTitle?: string | null;
+  regionCode?: string | null;
+  versionNumber?: string | null;
+  firstPublished?: number | null;
+  isPrimary?: boolean;
+  paragraphCount?: number;
+};
+
+/**
+ * The local adapter exposes the complete edition catalog. The public API still
+ * exposes its older language summary, so capability fields remain optional.
+ */
+export type ApiLanguage = {
+  code: string;
+  name: string;
+  entityCount?: number;
+  paragraphCount?: number;
+  slug?: string;
+  bcp47?: string;
+  uiLabel?: string;
+  uiLabelEnglish?: string;
+  sources?: ApiTranslationSource[];
+};
+
+export type ApiLanguagesResponse = {
+  data: ApiLanguage[];
+};
+
 // POST /search response
 export type ApiSearchResponse = {
   data: ApiSearchResult[];
