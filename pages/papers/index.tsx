@@ -6,8 +6,12 @@ import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { useEditionToc } from "@/hooks/useEditionToc";
+import { paperHref } from "@/libs/readingFlow";
+import { htmlLanguageTag } from "@/libs/readingLanguage";
+import { useUiCopy } from "@/libs/uiCopy";
 import { paperLabels } from "@/utils/paperLabels";
-import Spinner from "@/components/Spinner";
 import { paperIdToUrl } from "@/utils/paperFormatters";
 
 // Define the structure of the data you expect from the API
@@ -24,11 +28,21 @@ type TOCNode = {
 
 type TOCPageProps = {
   nodes?: TOCNode[];
+  servedEdition?: { lang?: string | null; source?: string | null };
 };
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: serverNodes = [], servedEdition }: TOCPageProps) => {
+  const { language, source, ready } = useReadingLanguage();
+  const copy = useUiCopy();
+  const nodes = useEditionToc(
+    serverNodes,
+    servedEdition,
+    language,
+    source,
+    ready
+  );
   // Hooks.
   const { status } = useSession();
 
@@ -143,8 +157,8 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
         return (
           <div key={currentNode.globalId} className="mb-8">
             <h2 className="text-xs mb-6 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-              Part {currentNode.partId}:{" "}
-              {currentNode.partTitle || `Part ${currentNode.partId}`}
+              {copy.catalog.part} {currentNode.partId}:{" "}
+              {currentNode.partTitle || `${copy.catalog.part} ${currentNode.partId}`}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {papers.map((paper) => {
@@ -156,12 +170,12 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                 return (
                   <Link
                     className="relative flex flex-col justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                    href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                    href={paperHref(`${paper.paperId}`, null, language, source)}
                     key={paper.globalId}
                   >
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-400">
-                        Paper {paper.paperId}
+                        {copy.catalog.paper} {paper.paperId}
                       </span>
                       <h3
                         className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white"
@@ -209,9 +223,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
               <Link
                 className="relative block px-4 py-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                href={`/papers/${paperIdToUrl(`${currentNode.paperId}`)}`}
+                href={paperHref(`${currentNode.paperId}`, null, language, source)}
               >
-                <span className="text-xs text-gray-400">Foreword</span>
+                <span className="text-xs text-gray-400">
+                  {copy.catalog.foreword}
+                </span>
                 <h3 className="text-lg font-bold text-gray-600 dark:text-white">
                   {currentNode.paperTitle}
                 </h3>
@@ -249,27 +265,22 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
-        metaDescription="Find the Urantia Papers that resonate with you on UrantiaHub. With 197 papers, there is a wealth of wisdom to explore."
-        titlePrefix="Papers"
+        metaDescription={copy.catalog.description}
+        titlePrefix={copy.catalog.title}
         canonicalUrl="https://www.urantiahub.com/papers"
+        language={htmlLanguageTag(language)}
       />
 
       <Navbar />
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl">
-        {status === "loading" ? (
-          <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
-            <Spinner />
-          </div>
-        ) : (
-          <>
+        <>
             <div className="mt-4 mb-4 text-center">
-              <h1 className="text-5xl font-bold mb-8">The Urantia Papers</h1>
+              <h1 className="text-5xl font-bold mb-8">{copy.catalog.title}</h1>
 
               {/* -- All Papers --- */}
               <h2 className="text-base pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                All Papers
+                {copy.catalog.all}
               </h2>
 
               {/* Render filter toggle buttons */}
@@ -282,12 +293,15 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                       setActiveFilters([]);
                     }}
                   >
-                    Hide Filters
+                    {copy.catalog.hideFilters}
                   </button>
                   <div className="flex flex-wrap gap-2 mt-4 mb-4">
                     {paperLabels.map((label) => (
                       <button
-                        aria-label={`Filter by ${label}`}
+                        aria-label={copy.catalog.filterByTopic.replace(
+                          "{topic}",
+                          label
+                        )}
                         key={label}
                         className={`px-3 py-1 rounded text-sm md:text-xs font-semibold ${
                           activeFilters.includes(label)
@@ -307,7 +321,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                     className="px-3 py-1 rounded text-sm md:text-xs font-semibold bg-white text-gray-400 dark:bg-neutral-600 dark:text-neutral-300 border-0 shadow-lg"
                     onClick={() => setShowFilters(true)}
                   >
-                    Filter by Topics
+                    {copy.catalog.filterTopics}
                   </button>
                 </div>
               )}
@@ -316,28 +330,36 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
             {/* Render parts and papers */}
             {foreword && renderNode(foreword)}
             {sortedNodes.map((node) => renderNode(node))}
-          </>
-        )}
+        </>
       </main>
       <Footer />
     </div>
   );
 };
 
-export async function getStaticProps() {
+export async function getServerSideProps(context: any) {
+  const { cacheEdition, editionFromRequest } = await import(
+    "@/libs/editionRequest"
+  );
   const { fetchToc } = await import("@/libs/urantiaApi/client");
+  const { lang, source } = editionFromRequest(
+    context.query ?? {},
+    context.req?.headers?.cookie
+  );
   let nodes: any[] = [];
   try {
-    nodes = await fetchToc();
+    nodes = await fetchToc(lang, source);
+    cacheEdition(context.res);
   } catch (error) {
-    console.error("[getStaticProps] Failed to fetch TOC:", error);
+    console.error("[getServerSideProps] Failed to fetch TOC:", error);
+    context.res.setHeader("Cache-Control", "private, no-store");
   }
 
   return {
     props: {
       nodes,
+      servedEdition: { lang: lang ?? "eng", source: source ?? null },
     },
-    revalidate: 60,
   };
 }
 

@@ -1,4 +1,5 @@
 import Head from "next/head";
+import type { EditionLink } from "@/libs/editionRequest";
 
 const DEFAULT_META_DESCRIPTION =
   "Explore the Urantia Papers through a modern digital platform. Discover profound insights about science, spirituality, and human history. Join our community of truth-seekers for an enhanced reading experience with study tools and collaborative features.";
@@ -8,9 +9,11 @@ type HeadTagProps = {
   titlePrefix?: string;
   canonicalUrl?: string;
   jsonLd?: Record<string, unknown>;
+  language?: string;
+  alternates?: EditionLink[];
 };
 
-const HeadTag = ({ metaDescription, titlePrefix, canonicalUrl, jsonLd }: HeadTagProps) => {
+const HeadTag = ({ metaDescription, titlePrefix, canonicalUrl, jsonLd, language, alternates = [] }: HeadTagProps) => {
   const derivedTitle = titlePrefix ? `${titlePrefix} | UrantiaHub` : "UrantiaHub";
   const derivedUrl = canonicalUrl || "https://www.urantiahub.com";
 
@@ -22,6 +25,9 @@ const HeadTag = ({ metaDescription, titlePrefix, canonicalUrl, jsonLd }: HeadTag
 
       {/* Canonical URL */}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      {alternates.map(({ hrefLang, href }) => (
+        <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />
+      ))}
 
       {/* Favicon */}
       <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -45,6 +51,7 @@ const HeadTag = ({ metaDescription, titlePrefix, canonicalUrl, jsonLd }: HeadTag
       <meta name="msapplication-TileColor" content="#e2e8f0" />
       <meta name="msapplication-tap-highlight" content="no" />
       <meta name="theme-color" content="#e2e8f0" />
+      {language && <meta httpEquiv="content-language" content={language} />}
 
       {/* Social Media Meta Tags */}
       <meta name="twitter:card" content="summary" />
@@ -67,6 +74,7 @@ const HeadTag = ({ metaDescription, titlePrefix, canonicalUrl, jsonLd }: HeadTag
       />
       <meta property="og:site_name" content="UrantiaHub" />
       <meta property="og:url" content={derivedUrl} />
+      {language && <meta property="og:locale" content={language.replace("-", "_")} />}
       <meta
         property="og:image"
         content="https://www.urantiahub.com/sharing.png"

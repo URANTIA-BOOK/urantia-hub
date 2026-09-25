@@ -4,8 +4,7 @@
  */
 
 import { getRedisClient } from "@/libs/redis";
-
-const API_HOST = process.env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
+import { resolveApiHost } from "./client";
 const CACHE_KEY = "paper-paragraph-counts";
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 1 week
 
@@ -48,7 +47,7 @@ export async function getPaperParagraphCounts(): Promise<Map<string, number>> {
     const results = await Promise.all(
       batch.map(async (id) => {
         try {
-          const res = await fetch(`${API_HOST}/papers/${id}`);
+          const res = await fetch(`${resolveApiHost()}/papers/${id}`);
           if (!res.ok) return { id, count: 0 };
           const json: ApiPaperDetail = await res.json();
           return { id, count: json.data.paragraphs.length };
