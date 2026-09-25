@@ -99,14 +99,18 @@
   },
   "catalog": {
     "title": "Die Urantia-Schriften",
+    "description": "Finde auf UrantiaHub die Urantia-Schriften, die dich ansprechen. Entdecke jede Schrift in deiner gewählten Leseausgabe.",
     "all": "Alle Schriften",
     "filterTopics": "Nach Themen filtern",
+    "filterByTopic": "Nach {topic} filtern",
     "hideFilters": "Filter ausblenden",
     "foreword": "Vorwort",
     "paper": "Schrift",
-    "part": "Teil"
+    "part": "Teil",
+    "partPapers": "Schriften in Teil {part}"
   },
   "discover": {
+    "description": "Erkunde die Urantia-Schriften auf UrantiaHub und entdecke Gedanken und Lehren in deiner gewählten Leseausgabe.",
     "featuredTitle": "Ausgewählte Stellen",
     "featuredBody": "Entdecke den Zusammenhang einiger der inspirierendsten Stellen.",
     "continueTitle": "Lies weiter",
@@ -118,7 +122,8 @@
     "originsTitle": "Menschliche Ursprünge und Entwicklung",
     "originsBody": "Verfolge die biologische und kulturelle Entwicklung der Menschheit.",
     "beyondTitle": "Das Leben jenseits der Erde",
-    "beyondBody": "Entdecke das Abenteuer nach dem sterblichen Leben und die Wesen, die uns begleiten."
+    "beyondBody": "Entdecke das Abenteuer nach dem sterblichen Leben und die Wesen, die uns begleiten.",
+    "readMore": "Weiterlesen"
   },
   "edition": {
     "language": "Sprache",

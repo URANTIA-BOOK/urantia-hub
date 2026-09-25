@@ -50,11 +50,18 @@ export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }: AppProps) {
+  const servedEdition = pageProps.servedEdition as
+    | { lang?: string | null; source?: string | null }
+    | undefined;
+
   return (
     <div className={googleFont.className}>
       <ThemeProvider>
         <SessionProvider session={session}>
-          <ReadingLanguageProvider>
+          <ReadingLanguageProvider
+            initialLanguage={servedEdition?.lang}
+            initialSource={servedEdition?.source}
+          >
             <AppContent Component={Component} pageProps={pageProps} />
           </ReadingLanguageProvider>
         </SessionProvider>

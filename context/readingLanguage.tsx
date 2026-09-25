@@ -22,6 +22,7 @@ import {
   writeReadingCookies,
   writeStoredReadingLanguage,
   writeStoredReadingSource,
+  htmlLanguageTag,
   type ReaderLangOption,
 } from "@/libs/readingLanguage";
 
@@ -69,16 +70,24 @@ function toOption(item: ApiLanguage): ReaderLangOption {
 
 export function ReadingLanguageProvider({
   children,
+  initialLanguage = "eng",
+  initialSource = null,
 }: {
   children: React.ReactNode;
+  initialLanguage?: string | null;
+  initialSource?: string | null;
 }) {
   const router = useRouter();
   const { status } = useSession();
   const [languages, setLanguages] = useState<readonly ReaderLangOption[]>([
     ENGLISH_LANG,
   ]);
-  const [language, setLanguageState] = useState("eng");
-  const [source, setSourceState] = useState<string | null>(null);
+  const [language, setLanguageState] = useState(() =>
+    isLanguageCode(initialLanguage) ? initialLanguage : "eng"
+  );
+  const [source, setSourceState] = useState<string | null>(() =>
+    isSourceId(initialSource) ? initialSource : null
+  );
   const [ready, setReady] = useState(false);
   const [catalogReady, setCatalogReady] = useState(false);
 
@@ -121,6 +130,10 @@ export function ReadingLanguageProvider({
     }
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = htmlLanguageTag(language);
+  }, [language]);
 
   useEffect(() => {
     let cancelled = false;
