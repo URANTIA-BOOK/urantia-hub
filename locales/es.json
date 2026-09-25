@@ -99,14 +99,18 @@
   },
   "catalog": {
     "title": "Los Documentos de Urantia",
+    "description": "Encuentra en UrantiaHub los Documentos de Urantia que conectan contigo. Explora cada documento en la edición de lectura seleccionada.",
     "all": "Todos los documentos",
     "filterTopics": "Filtrar por temas",
+    "filterByTopic": "Filtrar por {topic}",
     "hideFilters": "Ocultar filtros",
     "foreword": "Prólogo",
     "paper": "Documento",
-    "part": "Parte"
+    "part": "Parte",
+    "partPapers": "Documentos de la parte {part}"
   },
   "discover": {
+    "description": "Explora los Documentos de Urantia en UrantiaHub y descubre ideas y enseñanzas en la edición de lectura seleccionada.",
     "featuredTitle": "Pasajes destacados",
     "featuredBody": "Descubre el contexto de algunos de los pasajes más inspiradores.",
     "continueTitle": "Sigue tu camino",
@@ -118,7 +122,8 @@
     "originsTitle": "Orígenes y desarrollo humanos",
     "originsBody": "Recorre la evolución biológica y cultural de la humanidad.",
     "beyondTitle": "La vida más allá de la Tierra",
-    "beyondBody": "Descubre la aventura después de la vida mortal y a los seres que nos acompañan."
+    "beyondBody": "Descubre la aventura después de la vida mortal y a los seres que nos acompañan.",
+    "readMore": "Leer más"
   },
   "edition": {
     "language": "Idioma",

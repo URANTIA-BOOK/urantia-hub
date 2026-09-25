@@ -99,14 +99,18 @@
   },
   "catalog": {
     "title": "The Urantia Papers",
+    "description": "Find the Urantia Papers that resonate with you on UrantiaHub. Explore every paper in your selected reading edition.",
     "all": "All Papers",
     "filterTopics": "Filter by Topics",
+    "filterByTopic": "Filter by {topic}",
     "hideFilters": "Hide Filters",
     "foreword": "Foreword",
     "paper": "Paper",
-    "part": "Part"
+    "part": "Part",
+    "partPapers": "Part {part} Papers"
   },
   "discover": {
+    "description": "Explore the Urantia Papers on UrantiaHub and discover insights and teachings in your selected reading edition.",
     "featuredTitle": "Featured Passages",
     "featuredBody": "Discover the context behind some of the most inspiring passages.",
     "continueTitle": "Continue Your Journey",
@@ -118,7 +122,8 @@
     "originsTitle": "Human Origins & Development",
     "originsBody": "Uncover the story of humanity's biological and cultural evolution through the ages.",
     "beyondTitle": "Life Beyond Earth",
-    "beyondBody": "Discover the adventure after mortal life and learn about the beings that help us through our journey."
+    "beyondBody": "Discover the adventure after mortal life and learn about the beings that help us through our journey.",
+    "readMore": "Read more"
   },
   "edition": {
     "language": "Language",

@@ -99,14 +99,18 @@
   },
   "catalog": {
     "title": "Les Fascicules d'Urantia",
+    "description": "Trouvez sur UrantiaHub les fascicules d'Urantia qui vous parlent. Explorez chaque fascicule dans l'édition de lecture choisie.",
     "all": "Tous les fascicules",
     "filterTopics": "Filtrer par thèmes",
+    "filterByTopic": "Filtrer par {topic}",
     "hideFilters": "Masquer les filtres",
     "foreword": "Avant-propos",
     "paper": "Fascicule",
-    "part": "Partie"
+    "part": "Partie",
+    "partPapers": "Fascicules de la partie {part}"
   },
   "discover": {
+    "description": "Explorez les fascicules d'Urantia sur UrantiaHub et découvrez leurs idées et enseignements dans l'édition de lecture choisie.",
     "featuredTitle": "Passages choisis",
     "featuredBody": "Découvrez le contexte de quelques-uns des passages les plus inspirants.",
     "continueTitle": "Poursuivez votre lecture",
@@ -118,7 +122,8 @@
     "originsTitle": "Origines et développement humains",
     "originsBody": "Parcourez l'évolution biologique et culturelle de l'humanité.",
     "beyondTitle": "La vie au-delà de la Terre",
-    "beyondBody": "Découvrez l'aventure après la vie mortelle et les êtres qui nous accompagnent."
+    "beyondBody": "Découvrez l'aventure après la vie mortelle et les êtres qui nous accompagnent.",
+    "readMore": "Lire la suite"
   },
   "edition": {
     "language": "Langue",

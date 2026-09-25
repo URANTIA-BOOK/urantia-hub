@@ -31,6 +31,18 @@ export const ENGLISH_LANG: ReaderLangOption = {
   sources: [],
 };
 
+const HTML_LANGUAGE_TAGS: Record<string, string> = {
+  eng: "en",
+  es: "es",
+  fr: "fr",
+  de: "de",
+};
+
+export function htmlLanguageTag(language?: string | null): string {
+  if (!language) return "en";
+  return HTML_LANGUAGE_TAGS[language] ?? language.toLowerCase();
+}
+
 export function isLanguageCode(value: unknown): value is string {
   return typeof value === "string" && /^[a-z]{2,8}$/.test(value);
 }
