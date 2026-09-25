@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 // Relative modules.
 import PaperNavbar from "@/components/PaperNavbar";
+import { useHasAuthProvider } from "@/hooks/useHasAuthProvider";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { useEffect, useState } from "react";
 
@@ -35,6 +36,7 @@ const Navbar = ({
   // Hooks.
   const router = useRouter();
   const { status } = useSession();
+  const hasAuthProvider = useHasAuthProvider();
 
   // Derive the Read link based on the authentication status.
   const continueReadingLink = deriveReadLink(status);
@@ -155,7 +157,7 @@ const Navbar = ({
             </svg>
             Papers
           </Link>
-          {status === "unauthenticated" && (
+          {status === "unauthenticated" && hasAuthProvider && (
             <button
               className="flex-1 flex flex-col border-0 dark:border-0 items-center p-0 dark:p-0 text-xs text-center text-gray-500 hover:text-gray-600 dark:text-gray-400 hover:dark:text-white bg-transparent line-clamp-1 hover:no-underline transition duration-300 ease-in-out focus:outline-none"
               onClick={() => {
