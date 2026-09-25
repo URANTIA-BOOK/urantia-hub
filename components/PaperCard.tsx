@@ -1,8 +1,9 @@
 // Node modules.
 import Link from "next/link";
 // Relative modules.
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import { paperLabelsLookup } from "@/utils/paperLabels";
-import { paperIdToUrl } from "@/utils/paperFormatters";
 
 const PaperCard = ({
   nextGlobalId,
@@ -15,6 +16,7 @@ const PaperCard = ({
   paperTitle: string;
   progress: number;
 }) => {
+  const { language, source } = useReadingLanguage();
   const isCompleted = progress === 100;
   const isNotStarted = progress === 0;
 
@@ -29,11 +31,14 @@ const PaperCard = ({
     <Link
       aria-label="Read paper"
       className="flex flex-col justify-between px-4 py-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-      href={`/papers/${paperIdToUrl(paperId)}${
+      href={paperHref(
+        paperId,
         progress > 0 && progress < 100 && !nextGlobalId?.endsWith("0.1")
-          ? `#${nextGlobalId}`
-          : ""
-      }`}
+          ? nextGlobalId
+          : null,
+        language,
+        source
+      )}
     >
       <div className="flex flex-col">
         <span className="text-xs text-gray-400">Paper {paperId}</span>
