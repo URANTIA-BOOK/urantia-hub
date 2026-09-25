@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import React, {
   createContext,
@@ -72,6 +73,7 @@ export function ReadingLanguageProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { status } = useSession();
   const [languages, setLanguages] = useState<readonly ReaderLangOption[]>([
     ENGLISH_LANG,
   ]);
@@ -81,15 +83,21 @@ export function ReadingLanguageProvider({
   const [catalogReady, setCatalogReady] = useState(false);
 
   const apply = useCallback(
-    (nextLanguage: string, nextSource: string | null) => {
+    (nextLanguage: string, nextSource: string | null, persistAccount: boolean) => {
       const resolved = resolveSourceId(languages, nextLanguage, nextSource);
       setLanguageState(nextLanguage);
       setSourceState(resolved);
       writeStoredReadingLanguage(nextLanguage);
       writeStoredReadingSource(resolved);
       writeReadingCookies(nextLanguage, resolved);
+      if (!persistAccount || status !== "authenticated") return;
+      void fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ readingLanguage: nextLanguage }),
+      }).catch(() => {});
     },
-    [languages]
+    [languages, status]
   );
 
   // Read the edition before paint. A post-paint effect flashes English,
@@ -146,7 +154,7 @@ export function ReadingLanguageProvider({
     (nextLanguage: string, sourceId?: string | null) => {
       if (!isLanguageCode(nextLanguage)) return;
       if (!languages.some((item) => item.code === nextLanguage)) return;
-      apply(nextLanguage, sourceId ?? null);
+      apply(nextLanguage, sourceId ?? null, true);
     },
     [apply, languages]
   );
@@ -167,7 +175,7 @@ export function ReadingLanguageProvider({
     if (followedQuery.current === mark) return;
     followedQuery.current = mark;
     if (!isLanguageCode(queryLang)) return;
-    apply(queryLang, isSourceId(querySource) ? querySource : null);
+    apply(queryLang, isSourceId(querySource) ? querySource : null, false);
   }, [apply, queryLang, querySource, ready, router.isReady]);
 
   return (
