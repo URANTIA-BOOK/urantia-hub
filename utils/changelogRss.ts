@@ -115,9 +115,9 @@ function renderList(heading: string, entries?: string[]): string {
 export function generateRssItem(release: ReleaseEntry): string {
   const content =
     (release.description ? `<p>${escapeXml(release.description)}</p>` : "") +
-    renderList("New Features", release.features) +
+    renderList("New features", release.features) +
     renderList("Improvements", release.improvements) +
-    renderList("Bug Fixes", release.fixes);
+    renderList("Bug fixes", release.fixes);
 
   const title = escapeXml(`v${release.version}: ${stripHtml(release.title)}`);
   const version = encodeURIComponent(`v${release.version}`);
