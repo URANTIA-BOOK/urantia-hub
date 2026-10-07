@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.github
+.vscode
+.devcontainer
+.env
+.env.*
+!.env.example
+__tests__
+coverage
+*.md
+*.pem
+.vercel
+.sentryclirc
+.env.sentry-build-plugin
+*.ots.bak

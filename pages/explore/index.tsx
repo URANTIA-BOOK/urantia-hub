@@ -7,7 +7,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { useEditionToc } from "@/hooks/useEditionToc";
+import { paperHref } from "@/libs/readingFlow";
+import { htmlLanguageTag } from "@/libs/readingLanguage";
+import { useUiCopy } from "@/libs/uiCopy";
 import { getPaperIdFromGlobalId } from "@/utils/node";
 
 // Define the structure of the data you expect from the API
@@ -43,11 +47,21 @@ type CuratedQuote = {
 
 type TOCPageProps = {
   nodes?: TOCNode[];
+  servedEdition?: { lang?: string | null; source?: string | null };
 };
 
 // Nodes defaults to [] because a client-side transition can render this page
 // with empty pageProps, which used to crash the whole page.
-const ReadPage = ({ nodes = [] }: TOCPageProps) => {
+const ReadPage = ({ nodes: serverNodes = [], servedEdition }: TOCPageProps) => {
+  const { language, source, ready } = useReadingLanguage();
+  const copy = useUiCopy();
+  const nodes = useEditionToc(
+    serverNodes,
+    servedEdition,
+    language,
+    source,
+    ready
+  );
   // Hooks.
   const { status } = useSession();
 
@@ -209,7 +223,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
     if (status === "authenticated") {
       void onAuthenticated();
     }
-  }, [status]);
+  }, [status, nodes]);
 
   const getInProgressPapersForUser = (
     allPapers: TOCNode[],
@@ -289,34 +303,28 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
-        metaDescription="Explore the rich tapestry of wisdom within The Urantia Papers on UrantiaHub, discovering insights and teachings that resonate with you."
-        titlePrefix="Explore"
+        metaDescription={copy.discover.description}
+        titlePrefix={copy.explore}
         canonicalUrl="https://www.urantiahub.com/explore"
+        language={htmlLanguageTag(language)}
       />
 
       <Navbar />
 
       <main className="mt-8 flex-grow container mx-auto px-4 my-4 max-w-4xl min-h-screen">
-        {status === "loading" ? (
-          <div className="mt-4 mb-4 text-center">
-            <h1 className="text-5xl font-bold mb-8">Explore</h1>
-            <Spinner />
-          </div>
-        ) : (
-          <>
+        <>
             <div className="mt-4 mb-4 text-center">
-              <h1 className="text-5xl font-bold mb-8">Explore</h1>
+              <h1 className="text-5xl font-bold mb-8">{copy.explore}</h1>
 
               {/* Featured Passages */}
               {!fetchingFeaturedQuotes && featuredQuotes?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Featured Passages
+                    {copy.discover.featuredTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Discover the context behind some of the most inspiring
-                    passages.
+                    {copy.discover.featuredBody}
                   </p>
 
                   {fetchingFeaturedQuotes ? (
@@ -334,21 +342,24 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={quote.globalId}
-                            href={`/papers/${paperIdToUrl(
-                              `${quote.paperId}`
-                            )}#${quote.globalId}`}
+                            href={paperHref(
+                              `${quote.paperId}`,
+                              quote.globalId,
+                              language,
+                              source
+                            )}
                             className="relative flex flex-col items-start text-left px-6 pt-5 pb-10 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             {/* Paper Info */}
                             <div className="flex flex-col w-full mb-2">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
                                 {quote.paperId === "0" ? (
-                                  "Foreword"
+                                  copy.catalog.foreword
                                 ) : (
                                   <>
-                                    <span>Paper {quote.paperId}</span>
+                                    <span>{copy.catalog.paper} {quote.paperId}</span>
                                     <span>
-                                      Part {quote.paragraphNode.partId}
+                                      {copy.catalog.part} {quote.paragraphNode.partId}
                                     </span>
                                   </>
                                 )}
@@ -376,7 +387,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                                   }}
                                 />
                                 <span className="text-sm text-blue-400 absolute bottom-3 right-3">
-                                  Read more
+                                  {copy.discover.readMore}
                                 </span>
                               </div>
                             </div>
@@ -392,12 +403,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               {!fetchingProgress && papersInProgress?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Continue Your Journey
+                    {copy.discover.continueTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Pick up where you left off in your exploration of the
-                    papers.
+                    {copy.discover.continueBody}
                   </p>
 
                   {fetchingProgress ? (
@@ -416,18 +426,18 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             key={paper.globalId}
                           >
                             <div className="flex flex-col w-full">
                               {/* Top Row */}
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
                                 {paper.paperId === "0" ? (
-                                  "Foreword"
+                                  copy.catalog.foreword
                                 ) : (
                                   <>
-                                    <span>Paper {paper.paperId}</span>{" "}
-                                    <span>Part {paper.partId}</span>
+                                    <span>{copy.catalog.paper} {paper.paperId}</span>{" "}
+                                    <span>{copy.catalog.part} {paper.partId}</span>
                                   </>
                                 )}
                               </div>
@@ -467,11 +477,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               {!fetchingMostRead && mostReadPapers?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Most Read Papers
+                    {copy.discover.mostReadTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Discover the papers that readers frequently return to.
+                    {copy.discover.mostReadBody}
                   </p>
 
                   {fetchingMostRead ? (
@@ -487,17 +497,17 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
                                 {paper.paperId === "0" ? (
-                                  "Foreword"
+                                  copy.catalog.foreword
                                 ) : (
                                   <>
-                                    <span>Paper {paper.paperId}</span>
-                                    <span>Part {paper.partId}</span>
+                                    <span>{copy.catalog.paper} {paper.paperId}</span>
+                                    <span>{copy.catalog.part} {paper.partId}</span>
                                   </>
                                 )}
                               </div>
@@ -532,12 +542,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               {!fetchingScience && sciencePapers?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Science & Cosmology
+                    {copy.discover.scienceTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Explore fascinating perspectives on physics, astronomy, and
-                    the architecture of reality.
+                    {copy.discover.scienceBody}
                   </p>
 
                   {fetchingScience ? (
@@ -553,13 +562,13 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <span>{copy.catalog.paper} {paper.paperId}</span>
+                                <span>{copy.catalog.part} {paper.partId}</span>
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -592,12 +601,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               {!fetchingAnthropology && anthropologyPapers?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Human Origins & Development
+                    {copy.discover.originsTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Uncover the story of humanity&apos;s biological and cultural
-                    evolution through the ages.
+                    {copy.discover.originsBody}
                   </p>
 
                   {fetchingAnthropology ? (
@@ -613,13 +621,13 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <span>{copy.catalog.paper} {paper.paperId}</span>
+                                <span>{copy.catalog.part} {paper.partId}</span>
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -652,12 +660,11 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
               {!fetchingAfterLife && afterLifePapers?.length ? (
                 <div className="mb-8 fade-in">
                   <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                    Life Beyond Earth
+                    {copy.discover.beyondTitle}
                   </h2>
 
                   <p className="text-xs text-gray-400 mb-6">
-                    Discover the adventure after mortal life and learn about the
-                    beings that help us through our journey.
+                    {copy.discover.beyondBody}
                   </p>
 
                   {fetchingAfterLife ? (
@@ -673,13 +680,13 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                         return (
                           <Link
                             key={paper.globalId}
-                            href={`/papers/${paperIdToUrl(`${paper.paperId}`)}`}
+                            href={paperHref(`${paper.paperId}`, null, language, source)}
                             className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                           >
                             <div className="flex flex-col w-full">
                               <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                <span>Paper {paper.paperId}</span>
-                                <span>Part {paper.partId}</span>
+                                <span>{copy.catalog.paper} {paper.paperId}</span>
+                                <span>{copy.catalog.part} {paper.partId}</span>
                               </div>
                               <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                 {paper.paperTitle}
@@ -728,7 +735,7 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                   return (
                     <div key={part.globalId} className="mb-8 fade-in">
                       <h2 className="text-base mb-2 pb-2 text-center border-b text-gray-400 border-gray-200 dark:border-gray-600">
-                        Part {part.partId} Papers
+                        {copy.catalog.partPapers.replace("{part}", part.partId)}
                       </h2>
 
                       <p className="text-xs text-gray-400 mb-6">
@@ -745,15 +752,18 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                           return (
                             <Link
                               key={paper.globalId}
-                              href={`/papers/${paperIdToUrl(
-                                `${paper.paperId}`
-                              )}`}
+                              href={paperHref(
+                                `${paper.paperId}`,
+                                null,
+                                language,
+                                source
+                              )}
                               className="relative flex flex-col items-start text-left justify-between px-4 py-2 mb-2 bg-white dark:bg-neutral-700 hover:dark:bg-neutral-600 rounded transition-colors hover:no-underline hover:shadow-lg hover:dark:shadow-none transition-shadow duration-300"
                             >
                               <div className="flex flex-col w-full">
                                 <div className="text-xs text-gray-400 flex items-center justify-between w-full">
-                                  <span>Paper {paper.paperId}</span>
-                                  <span>Part {paper.partId}</span>
+                                  <span>{copy.catalog.paper} {paper.paperId}</span>
+                                  <span>{copy.catalog.part} {paper.partId}</span>
                                 </div>
                                 <h3 className="mt-1 text-lg font-bold leading-6 text-gray-600 dark:text-white">
                                   {paper.paperTitle}
@@ -783,27 +793,35 @@ const ReadPage = ({ nodes = [] }: TOCPageProps) => {
                 })}
             </div>
           </>
-        )}
       </main>
       <Footer />
     </div>
   );
 };
 
-export async function getStaticProps() {
+export async function getServerSideProps(context: any) {
+  const { cacheEdition, editionFromRequest } = await import(
+    "@/libs/editionRequest"
+  );
   const { fetchToc } = await import("@/libs/urantiaApi/client");
+  const { lang, source } = editionFromRequest(
+    context.query ?? {},
+    context.req?.headers?.cookie
+  );
   let nodes: any[] = [];
   try {
-    nodes = await fetchToc();
+    nodes = await fetchToc(lang, source);
+    cacheEdition(context.res);
   } catch (error) {
-    console.error("[getStaticProps] Failed to fetch TOC:", error);
+    console.error("[getServerSideProps] Failed to fetch TOC:", error);
+    context.res.setHeader("Cache-Control", "private, no-store");
   }
 
   return {
     props: {
       nodes,
+      servedEdition: { lang: lang ?? "eng", source: source ?? null },
     },
-    revalidate: 60,
   };
 }
 

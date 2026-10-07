@@ -9,9 +9,11 @@ import HeadTag from "@/components/HeadTag";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 
 const Search = () => {
+  const { language, source } = useReadingLanguage();
   // Router.
   const { data: session } = useSession();
   const router = useRouter();
@@ -351,9 +353,12 @@ const Search = () => {
               aria-label="View paragraph in context"
               className="mb-6 text-left hover:no-underline isolated-quote"
               key={result.globalId}
-              href={`/papers/${paperIdToUrl(`${result.paperId}`)}#${
-                result.globalId
-              }?q=${encodeURIComponent(query)}`}
+              href={paperHref(
+                `${result.paperId}`,
+                `${result.globalId}?q=${encodeURIComponent(query)}`,
+                language,
+                source
+              )}
             >
               <div className="leading-relaxed">
                 <div className="flex flex-col block mb-1 text-gray-400 text-xs">

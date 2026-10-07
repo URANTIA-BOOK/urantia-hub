@@ -422,6 +422,18 @@ Key environment variables (see `.env.example`):
 
 UrantiaHub deploys to **Vercel**.
 
+### Container image
+
+The production image requires PostgreSQL and Redis. Set `DATABASE_URL` to the
+Hub database and `REDIS_URL` to its cache before starting the container. The
+default image command runs `prisma migrate deploy` before `next start`, so an
+unreachable database or a failed migration stops the container instead of
+serving against an unknown schema.
+
+The image copies the complete `prisma/` directory and generated Prisma client
+into the runner stage. A container orchestrator must start PostgreSQL before
+the Hub and should use the Hub HTTP health check as its readiness boundary.
+
 **Cron Jobs** (Vercel Cron):
 - `POST /api/crons/sendDailyQuote` — daily
 - `POST /api/crons/sendContinueReadingAfter24Hours` — daily

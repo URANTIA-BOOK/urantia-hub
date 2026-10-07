@@ -35,4 +35,6 @@ const VerifyRequestPage = () => {
   );
 };
 
+export { authOffReadRedirect as getServerSideProps } from "@/libs/authOffRedirect";
+
 export default VerifyRequestPage;

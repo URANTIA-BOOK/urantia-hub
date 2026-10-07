@@ -40,8 +40,11 @@ import {
   getValidPaperUrls,
   paperIdToUrl,
 } from "@/utils/paperFormatters";
-import { fetchParagraphParallels } from "@/libs/urantiaApi/client";
-import type { ParagraphParallels } from "@/libs/urantiaApi/types";
+import { fetchPaper, fetchParagraphParallels } from "@/libs/urantiaApi/client";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
+import type { ApiLanguage, ParagraphParallels } from "@/libs/urantiaApi/types";
+import type { EditionLink } from "@/libs/editionRequest";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useFontSize } from "@/hooks/useFontSize";
@@ -49,10 +52,38 @@ import { useModals } from "@/hooks/useModals";
 import { useNotes } from "@/hooks/useNotes";
 import { useReadProgress } from "@/hooks/useReadProgress";
 
+const SIGN_UP_COPY: Record<string, { lead: string; action: string }> = {
+  eng: {
+    lead: "Unlock handy features like bookmarking and notes.",
+    action: "Sign in or create an account",
+  },
+  es: {
+    lead: "Activa funciones útiles, como marcadores y notas.",
+    action: "Entra o crea una cuenta",
+  },
+  fr: {
+    lead: "Activez des fonctions pratiques, comme les signets et les notes.",
+    action: "Connectez-vous ou créez un compte",
+  },
+  de: {
+    lead: "Schalte praktische Funktionen wie Lesezeichen und Notizen frei.",
+    action: "Melde dich an oder erstelle ein Konto",
+  },
+};
+
+function signUpCopy(language: string) {
+  return SIGN_UP_COPY[language] ?? SIGN_UP_COPY.eng;
+}
+
 const notoSerifFont = Noto_Serif({
   subsets: ["latin"],
   weight: ["400", "700"],
 });
+
+type ServedEdition = {
+  lang: string;
+  source: string | null;
+};
 
 type PaperPageProps = {
   paperData: {
@@ -60,9 +91,17 @@ type PaperPageProps = {
       results: UBNode[];
     };
   };
+  servedEdition?: { lang?: string; source: string | null };
+  languageTag?: string;
+  alternateEditions?: EditionLink[];
 };
 
-const PaperPage = ({ paperData }: PaperPageProps) => {
+const PaperPage = ({
+  paperData,
+  servedEdition = { source: null },
+  languageTag = "en",
+  alternateEditions = [],
+}: PaperPageProps) => {
   // Hooks.
   const router = useRouter();
   const { status } = useSession();
@@ -78,17 +117,38 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Sign-up prompt state.
   const [showSignUpPrompt, setShowSignUpPrompt] = useState<boolean>(false);
+  const [overlayNodes, setOverlayNodes] = useState<UBNode[] | null>(null);
+  const { language, source, ready: languageReady } = useReadingLanguage();
 
-  // Get the nodes from the paper data. Stay null-safe here: paperData can be
-  // undefined on a failed client-side navigation, and results can be empty when
-  // getStaticProps falls back after an API error. The real guard lives below,
-  // after all hooks have run (so we never call hooks conditionally).
-  const nodes = paperData?.data?.results ?? [];
+  const sourceNodes = paperData?.data?.results ?? [];
+  const paperName =
+    typeof router.query.paperName === "string" ? router.query.paperName : "";
+  const routePaperId = paperName ? getPaperIdFromPaperUrl(paperName) : "";
+  const overlayPaperId = overlayNodes?.[0]?.paperId ?? "";
+  const overlayIsCurrent =
+    Boolean(overlayNodes) &&
+    (!routePaperId || overlayPaperId === routePaperId);
+  const nodes = overlayIsCurrent ? overlayNodes! : sourceNodes;
 
   // Get paper details.
   const firstNode = nodes[0];
   const paperId = firstNode?.paperId ?? "";
   const paperTitle = firstNode?.paperTitle ?? "";
+  const paperIdNumber = parseInt(paperId);
+  const firstParagraph = nodes.find((node) => node.type === "paragraph")?.text ?? "";
+  const pageTitle = paperIdNumber > 0
+    ? `Paper ${paperId} - ${paperTitle}`
+    : paperTitle || "Foreword";
+  const metaDescription = firstParagraph
+    ? `${pageTitle} - ${firstParagraph}`.slice(0, 300)
+    : pageTitle;
+  const publicOrigin = process.env.NEXT_PUBLIC_HOST || "https://www.urantiahub.com";
+  const paperPath = `/papers/${paperIdToUrl(paperId)}`;
+  const canonicalUrl = new URL(paperPath, publicOrigin);
+  if (servedEdition.lang && servedEdition.lang !== "eng") {
+    canonicalUrl.searchParams.set("lang", servedEdition.lang);
+    if (servedEdition.source) canonicalUrl.searchParams.set("source", servedEdition.source);
+  }
 
   // Custom hooks.
   const { fontSize, updateFontSize, getFontSizeClasses } = useFontSize();
@@ -123,8 +183,46 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     skipToNextParagraph,
     skipToPreviousParagraph,
   } = useAudioPlayer(nodes, markParagraphAsRead);
-  const paperIdNumber = parseInt(paperId);
   const nextPaperId = paperIdNumber < 196 ? paperIdNumber + 1 : null;
+  const serverHasEdition =
+    sourceNodes.length > 0 &&
+    sourceNodes[0]?.paperId === paperId &&
+    servedEdition?.lang === language &&
+    (language === "eng" ||
+      !source ||
+      servedEdition.source === source);
+  const needsClientFetch =
+    languageReady && router.isReady && Boolean(paperId) && !serverHasEdition;
+
+  useEffect(() => {
+    if (!languageReady || !router.isReady || !paperId) return;
+    if (serverHasEdition) {
+      setOverlayNodes(null);
+      return;
+    }
+    let cancelled = false;
+    setOverlayNodes(null);
+    const requestLang = language === "eng" ? null : language;
+    const requestSource = language === "eng" ? null : source;
+    fetchPaper(paperId, requestLang, requestSource)
+      .then((data) => {
+        if (!cancelled) setOverlayNodes(data?.data?.results ?? []);
+      })
+      .catch((error) => {
+        console.error(`[paper] overlay failed for lang=${language}:`, error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    language,
+    languageReady,
+    paperData,
+    paperId,
+    router.isReady,
+    serverHasEdition,
+    source,
+  ]);
 
   // Calculate nodes for modals.
   const explainNode = selectedGlobalIdExplain
@@ -221,10 +319,12 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
     const topMostVisibleNode = findTopMostVisibleNode();
 
     // Set the callback URL.
-    let callbackUrl = `/papers/${paperIdToUrl(`${paperId}`)}`;
-    if (topMostVisibleNode) {
-      callbackUrl += `#${topMostVisibleNode.id}`;
-    }
+    const callbackUrl = paperHref(
+      `${paperId}`,
+      topMostVisibleNode?.id,
+      language,
+      source
+    );
 
     // Sign in.
     router.push(`/auth/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`);
@@ -360,7 +460,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
 
   // Show a spinner until the content has loaded. Covers both an undefined
   // paperData (failed client-side navigation) and the empty-results fallback
-  // that getStaticProps returns when the upstream API call fails.
+  // that the server render returns when the upstream API call fails.
   if (!nodes.length) {
     return <Spinner />;
   }
@@ -726,25 +826,18 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-700 dark:bg-neutral-800 dark:text-white">
       <HeadTag
-        metaDescription={`${
-          paperIdNumber > 0
-            ? `Urantia Paper ${paperId} - ${paperTitle}`
-            : "Urantia Papers Foreword"
-        } - ${paperData?.data?.results?.[2]?.text ?? ""}`}
-        titlePrefix={
-          paperIdNumber > 0 ? `Paper ${paperId} - ${paperTitle}` : "Foreword"
-        }
-        canonicalUrl={`https://www.urantiahub.com/papers/${paperIdToUrl(paperId)}`}
+        metaDescription={metaDescription}
+        titlePrefix={pageTitle}
+        canonicalUrl={canonicalUrl.toString()}
+        language={languageTag}
+        alternates={alternateEditions}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Article",
-          "name": paperIdNumber > 0 ? `Paper ${paperId} - ${paperTitle}` : "Foreword",
-          "description": `${
-            paperIdNumber > 0
-              ? `Urantia Paper ${paperId} - ${paperTitle}`
-              : "Urantia Papers Foreword"
-          } - ${paperData.data.results[2].text}`,
-          "url": `https://www.urantiahub.com/papers/${paperIdToUrl(paperId)}`,
+          "name": pageTitle,
+          "description": metaDescription,
+          "url": canonicalUrl.toString(),
+          "inLanguage": languageTag,
           "isPartOf": {
             "@type": "WebSite",
             "name": "UrantiaHub",
@@ -787,13 +880,13 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
         // purple box shadow
         <div className="z-10 fixed top-4 left-4 right-4 text-gray-600 bg-slate-50 dark:text-white dark:bg-neutral-900 p-4 rounded-lg text-sm pr-8 max-w-lg mx-auto fade-in shadow-lg shadow-purple-600/30 dark:shadow-purple-400/20">
           <p>
-            Unlock handy features like bookmarking and notes.{" "}
+            {signUpCopy(language).lead}{" "}
             <button
               className="text-sky-600 dark:text-sky-400 hover:underline p-0 m-0 border-none bg-transparent focus:outline-none"
               onClick={onSignUpClick}
               type="button"
             >
-              Sign in or create an account
+              {signUpCopy(language).action}
             </button>
           </p>
           <button
@@ -905,7 +998,7 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
           {nextPaperId ? (
             <Link
               className="flex text-right text-gray-400 hover:text-gray-600 hover:dark:text-white transition duration-300 ease-in-out"
-              href={`/papers/${paperIdToUrl(`${nextPaperId}`)}`}
+              href={paperHref(`${nextPaperId}`, null, language, source)}
             >
               Next{" "}
               <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -964,28 +1057,33 @@ const PaperPage = ({ paperData }: PaperPageProps) => {
   );
 };
 
-export async function getStaticProps(context: any) {
+export async function getServerSideProps(context: any) {
+  const { cacheEdition, editionFromRequest, editionLinks } = await import(
+    "@/libs/editionRequest"
+  );
+  const { editionQuery, fetchLanguages, fetchPaper } = await import("@/libs/urantiaApi/client");
   const { paperName } = context.params as { paperName: string };
+  const { lang, source } = editionFromRequest(
+    context.query ?? {},
+    context.req?.headers?.cookie
+  );
+  const edition = editionQuery(lang, source);
 
-  // Get valid paper URLs.
   const validPaperUrls = getValidPaperUrls();
 
-  // Check if the paperName is a valid paper URL.
   if (!validPaperUrls.includes(paperName)) {
-    // If the paperName is a paperId, redirect to the correct URL.
     const paperId = Number(paperName);
 
     if (!isNaN(paperId) && paperId >= 0 && paperId <= 196) {
       const paperUrl = paperIdToUrl(String(paperId));
       return {
         redirect: {
-          destination: `/papers/${paperUrl}`,
+          destination: `/papers/${paperUrl}${edition}`,
           permanent: true,
         },
       };
     }
 
-    // If the paperName is not a valid paper URL, return a 404.
     return {
       notFound: true,
     };
@@ -998,16 +1096,15 @@ export async function getStaticProps(context: any) {
     };
   }
 
-  const { fetchPaper } = await import("@/libs/urantiaApi/client");
   let paperData;
   try {
-    paperData = await fetchPaper(String(paperId));
+    paperData = await fetchPaper(String(paperId), lang, source);
   } catch (error) {
-    console.error(`[getStaticProps] Failed to fetch paper ${paperId}:`, error);
-    return { props: { paperData: { data: { results: [] } } }, revalidate: 60 };
+    console.error(`[getServerSideProps] Failed to fetch paper ${paperId}:`, error);
+    context.res.setHeader("Cache-Control", "private, no-store");
+    return { props: { paperData: { data: { results: [] } } } };
   }
 
-  // Add mp3 file URLs for each node if there is one.
   paperData?.data?.results?.forEach((node: UBNode) => {
     if (PAPER_ID_TO_MP3_URL[node.paperId as keyof typeof PAPER_ID_TO_MP3_URL]) {
       node.mp3Url = `${
@@ -1016,25 +1113,24 @@ export async function getStaticProps(context: any) {
     }
   });
 
+  let languages: ApiLanguage[] = [];
+  try {
+    languages = await fetchLanguages();
+  } catch (error) {
+    console.error("[getServerSideProps] Failed to fetch edition catalog:", error);
+  }
+  const servedLanguage = languages.find((language) => language.code === (lang || "eng"));
+  const publicOrigin = process.env.NEXT_PUBLIC_HOST || "https://www.urantiahub.com";
+  const paperPath = `/papers/${paperName}`;
+
+  cacheEdition(context.res);
   return {
     props: {
       paperData,
+      servedEdition: { lang, source: source ?? null },
+      languageTag: servedLanguage?.bcp47 || (lang && lang !== "eng" ? lang : "en"),
+      alternateEditions: editionLinks(publicOrigin, paperPath, languages),
     },
-  };
-}
-
-export async function getStaticPaths() {
-  // Only pre-render a small set at build time to avoid rate-limiting the API.
-  // The rest are generated on-demand via fallback: "blocking".
-  const prerenderedPaperIds = [0, 1, 2, 3, 4, 5];
-  const paths = prerenderedPaperIds.map((paperId) => {
-    const paperName = paperIdToUrl(String(paperId));
-    return { params: { paperName } };
-  });
-
-  return {
-    paths,
-    fallback: "blocking",
   };
 }
 
