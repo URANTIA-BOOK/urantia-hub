@@ -1,3 +1,10 @@
+import { paperHref, withEdition } from "@/libs/readingFlow";
+import { editionQuery } from "@/libs/urantiaApi/client";
+import {
+  readStoredReadingLanguage,
+  readStoredReadingSource,
+} from "@/libs/readingLanguage";
+
 /**
  * Constructs the Read link URL based on authentication status.
  * If unauthenticated, it attempts to retrieve the last visited node from localStorage.
@@ -7,12 +14,23 @@
 export const deriveReadLink = (
   status: "authenticated" | "loading" | "unauthenticated"
 ): string => {
+  const edition = editionQuery(
+    readStoredReadingLanguage(),
+    readStoredReadingSource()
+  );
+  const withEdition = (href: string) => {
+    if (!edition) return href;
+    return href.includes("?")
+      ? `${href}&${edition.slice(1)}`
+      : `${href}${edition}`;
+  };
+
   if (status === "loading") {
-    return "/api/redirect/user/read"; // Loading link
+    return withEdition("/api/redirect/user/read");
   }
 
   if (status === "authenticated") {
-    return "/api/redirect/user/read"; // Authenticated user link
+    return withEdition("/api/redirect/user/read");
   }
 
   if (status === "unauthenticated") {
@@ -21,27 +39,34 @@ export const deriveReadLink = (
       : null;
 
     if (lastVisitedNode) {
-      return `/api/redirect/user/read?paperId=${lastVisitedNode.paperId}&globalId=${lastVisitedNode.globalId}`;
-    } else {
-      return "/api/redirect/user/read";
+      return withEdition(
+        `/api/redirect/user/read?paperId=${lastVisitedNode.paperId}&globalId=${lastVisitedNode.globalId}`
+      );
     }
+    return withEdition("/api/redirect/user/read");
   }
 
-  return "/api/redirect/user/read";
+  return withEdition("/api/redirect/user/read");
 };
 
 type SavedPlace = { paperId?: string | null; globalId?: string | null } | null;
 
 // The hero button for a signed-out reader: the saved place, or the Foreword.
 export const deriveSignedOutReadButton = (
-  savedPlace: SavedPlace
+  savedPlace: SavedPlace,
+  lang?: string | null,
+  source?: string | null
 ): { href: string; label: string } => {
   if (savedPlace?.paperId && savedPlace?.globalId) {
     return {
-      href: `/api/redirect/user/read?paperId=${savedPlace.paperId}&globalId=${savedPlace.globalId}`,
+      href: withEdition(
+        `/api/redirect/user/read?paperId=${savedPlace.paperId}&globalId=${savedPlace.globalId}`,
+        lang,
+        source
+      ),
       label: "Continue Reading",
     };
   }
 
-  return { href: "/papers/foreword", label: "Start Reading" };
+  return { href: paperHref("0", null, lang, source), label: "Start Reading" };
 };

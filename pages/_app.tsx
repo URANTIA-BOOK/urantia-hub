@@ -8,6 +8,7 @@ import * as Sentry from "@sentry/nextjs";
 import type { AppProps } from "next/app";
 import type { NextComponentType, NextPageContext } from "next";
 // Relative modules.
+import { ReadingLanguageProvider } from "@/context/readingLanguage";
 import { ThemeProvider } from "@/context/theme";
 import { identifyUser, initAnalytics, resetIfIdentified, resetUser } from "@/libs/analytics";
 import "@/styles/globals.css";
@@ -68,11 +69,20 @@ export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }: AppProps) {
+  const servedEdition = pageProps.servedEdition as
+    | { lang?: string | null; source?: string | null }
+    | undefined;
+
   return (
     <div className={googleFont.className}>
       <ThemeProvider>
         <SessionProvider session={session}>
-          <AppContent Component={Component} pageProps={pageProps} />
+          <ReadingLanguageProvider
+            initialLanguage={servedEdition?.lang}
+            initialSource={servedEdition?.source}
+          >
+            <AppContent Component={Component} pageProps={pageProps} />
+          </ReadingLanguageProvider>
         </SessionProvider>
       </ThemeProvider>
       {process.env.NODE_ENV !== "development" && <SpeedInsights />}

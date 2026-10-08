@@ -4,7 +4,8 @@ import { useState } from "react";
 // Relative modules.
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import { paragraphPath } from "@/utils/parallels";
 import { renderLeadingText } from "@/utils/renderNode";
 import type {
@@ -170,6 +171,7 @@ type ListProps<T> = {
 };
 
 function UrantiaList({ parallels, expanded, onToggle }: ListProps<ApiUrantiaParallel>) {
+  const { language, source } = useReadingLanguage();
   if (parallels.length === 0) {
     return (
       <p className="text-gray-400 text-sm py-6 text-center">
@@ -182,7 +184,7 @@ function UrantiaList({ parallels, expanded, onToggle }: ListProps<ApiUrantiaPara
       {parallels.map((p) => {
         const isExpanded = expanded.has(p.id);
         const isLong = p.text.length > TEXT_PREVIEW;
-        const href = `/papers/${paperIdToUrl(p.paperId)}#${p.id}`;
+        const href = paperHref(p.paperId, p.id, language, source);
         return (
           <li
             key={p.id}

@@ -293,6 +293,18 @@ select.select-selected {
   margin-bottom: 0;
 }
 
+.paper-content .paragraph {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.paper-content .paragraph > span {
+  display: block;
+}
+
 .urantia-dev-py-4 {
   display: block;
   margin-bottom: 2rem;

@@ -11,6 +11,8 @@ import HeadTag from "@/components/HeadTag";
 import HomepageNavbar from "@/components/HomepageNavbar";
 import ParticleBackground from "@/components/ParticleBackground";
 import TiltButton from "@/components/TiltButton";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { useUiCopy } from "@/libs/uiCopy";
 import {
   deriveReadLink,
   deriveSignedOutReadButton,
@@ -26,19 +28,26 @@ import {
   Share2,
   Sparkles,
 } from "lucide-react";
-import FeatureCard, { modernFeatures } from "@/components/HomepageFeatureCard";
+import FeatureCard, { useModernFeatures } from "@/components/HomepageFeatureCard";
 import CommunityFeature from "@/components/HomepageCommunityFeature";
 
 const HomePage = () => {
   // Hooks.
   const { status } = useSession();
+  const { language, source } = useReadingLanguage();
+  const copy = useUiCopy();
+  const modernFeatures = useModernFeatures();
   const searchParams = useSearchParams();
 
   // State.
   const [lastVisitedNode, setLastVisitedNode] =
     useState<LastVisitedNode | null>(null);
   const [showDownButton, setShowDownButton] = useState<boolean>(true);
-  const signedOutReadButton = deriveSignedOutReadButton(lastVisitedNode);
+  const signedOutReadButton = deriveSignedOutReadButton(
+    lastVisitedNode,
+    language,
+    source
+  );
 
   const fetchLastVisitedNode = async () => {
     try {
@@ -132,21 +141,22 @@ const HomePage = () => {
           {/* Content */}
           <div className="relative z-10 max-w-7xl mx-auto w-full mt-[-5vh]">
             <h1 className="mt-0 mb-8 text-5xl md:text-7xl font-bold text-white max-w-4xl mx-auto leading-tight drop-shadow-lg">
-              Read the Urantia Papers
+              {copy.heroTitle}
             </h1>
             <p className="text-xl md:text-2xl text-white mb-14 max-w-2xl mx-auto leading-relaxed drop-shadow">
-              All 197 papers, with your place saved, your notes beside the
-              text, and search across every paragraph.
+              {copy.heroSubtitle}
             </p>
 
             {status === "authenticated" && (
               <TiltButton href={deriveReadLink(status)}>
-                Continue Reading
+                {copy.continueReading}
               </TiltButton>
             )}
             {status === "unauthenticated" && (
               <TiltButton href={signedOutReadButton.href}>
-                {signedOutReadButton.label}
+                {lastVisitedNode?.paperId && lastVisitedNode?.globalId
+                  ? copy.continueReading
+                  : copy.startReading}
               </TiltButton>
             )}
           </div>
@@ -206,12 +216,11 @@ const HomePage = () => {
               id="after-hero"
               className="text-4xl md:text-5xl font-semibold pb-1 mb-14 text-center bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-slate-400"
             >
-              What the Papers Cover
+              {copy.ideasHeading}
             </h2>
 
             <p className="text-xl text-center mb-16 max-w-3xl mx-auto text-gray-600 leading-relaxed">
-              The Urantia Papers discuss the universe, human history, and
-              spiritual life. They were first published in 1955.
+              {copy.ideasBody}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8">
@@ -228,7 +237,7 @@ const HomePage = () => {
                       />
                     </div>
                     <h3 className="text-xl font-semibold text-blue-900">
-                      Cosmology
+                      {copy.ideaScienceTitle}
                     </h3>
                   </div>
                   <div className="relative">
@@ -237,8 +246,7 @@ const HomePage = () => {
                     <div className="absolute -left-4 bottom-0 w-16 h-16 bg-indigo-600/5 rounded-full blur-xl" />
 
                     <p className="relative text-blue-900/80 leading-relaxed">
-                      Descriptions of the structure and organization of the
-                      universe.
+                      {copy.ideaScienceBody}
                     </p>
                   </div>
                 </div>
@@ -257,7 +265,7 @@ const HomePage = () => {
                       />
                     </div>
                     <h3 className="text-xl font-semibold text-emerald-900">
-                      Human History
+                      {copy.ideaOriginsTitle}
                     </h3>
                   </div>
                   <div className="relative">
@@ -266,8 +274,7 @@ const HomePage = () => {
                     <div className="absolute -left-4 bottom-0 w-16 h-16 bg-green-600/5 rounded-full blur-xl" />
 
                     <p className="relative text-emerald-900/80 leading-relaxed">
-                      An account of the origin and history of human
-                      civilization.
+                      {copy.ideaOriginsBody}
                     </p>
                   </div>
                 </div>
@@ -286,7 +293,7 @@ const HomePage = () => {
                       />
                     </div>
                     <h3 className="text-xl font-semibold text-violet-900">
-                      Science, Philosophy, and Religion
+                      {copy.ideaSpiritTitle}
                     </h3>
                   </div>
                   <div className="relative">
@@ -295,8 +302,7 @@ const HomePage = () => {
                     <div className="absolute -left-4 bottom-0 w-16 h-16 bg-purple-600/5 rounded-full blur-xl" />
 
                     <p className="relative text-violet-900/80 leading-relaxed">
-                      A view of science, philosophy, and religion as parts of
-                      one whole.
+                      {copy.ideaSpiritBody}
                     </p>
                   </div>
                 </div>
@@ -310,28 +316,26 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto px-6">
             {/* <h2 className="text-4xl md:text-5xl font-semibold mb-12 text-center"> */}
             <h2 className="text-4xl md:text-5xl font-semibold pb-1 mb-14 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-400 to-gray-900">
-              What are the Urantia Papers?
+              {copy.papersHeading}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
                 <p className="text-xl leading-relaxed mb-6">
-                  The Urantia Papers are 197 papers, including the Foreword.
-                  They cover cosmology, human history, and the life and
-                  teachings of Jesus.
+                  {copy.papersBody}
                 </p>
                 <p className="text-xl leading-relaxed">
                   <Link
                     className="text-blue-400 hover:text-blue-600 hover:no-underline transition-colors duration-200"
                     href="https://urantia.org"
                   >
-                    Urantia Foundation
+                    {copy.foundationName}
                   </Link>{" "}
-                  first published them as The Urantia Book in 1955.
+                  {copy.papersFoundationBody}
                 </p>
               </div>
               <div className="relative h-96">
                 <Image
-                  alt="Celestial host writing the Urantia Papers"
+                  alt={copy.heroImageAlt}
                   className="object-cover rounded-lg"
                   fill
                   src="/homepage1.jpg"
@@ -447,7 +451,7 @@ const HomePage = () => {
         <section className="pt-10 pb-56 bg-black text-white relative">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-4xl md:text-5xl font-semibold pb-1 mb-16 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-100 to-white">
-              The Four Parts
+              {copy.insightsHeading}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
@@ -458,12 +462,10 @@ const HomePage = () => {
                 {/* Card content */}
                 <div className="relative p-8 rounded-xl bg-slate-900/50 backdrop-blur-sm group-hover:bg-slate-900 transition-all duration-300">
                   <h3 className="text-2xl font-semibold mb-4 text-blue-100 group-hover:text-white transition-colors duration-300">
-                    Who Created Us?
+                    {copy.insightCreatorTitle}
                   </h3>
                   <p className="text-slate-300/80 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                    Discover our Creator who set in motion a vast family of
-                    celestial beings dedicated to helping humanity grow and
-                    progress.
+                    {copy.insightCreatorBody}
                   </p>
                 </div>
               </div>
@@ -471,11 +473,10 @@ const HomePage = () => {
               <div className="group relative border border-transparent hover:border-blue-500 transition-all duration-300 rounded-xl">
                 <div className="relative p-8 rounded-xl bg-slate-900/50 backdrop-blur-sm group-hover:bg-slate-900 transition-all duration-300">
                   <h3 className="text-2xl font-semibold mb-4 text-white group-hover:text-white transition-colors duration-300">
-                    How is Our Universe Organized?
+                    {copy.insightUniverseTitle}
                   </h3>
                   <p className="text-slate-300/80 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                    Explore the intricate structure of our local universe and
-                    its relationship to the greater cosmos.
+                    {copy.insightUniverseBody}
                   </p>
                 </div>
               </div>
@@ -483,11 +484,10 @@ const HomePage = () => {
               <div className="group relative border border-transparent hover:border-blue-500 transition-all duration-300 rounded-xl">
                 <div className="relative p-8 rounded-xl bg-slate-900/50 backdrop-blur-sm group-hover:bg-slate-900 transition-all duration-300">
                   <h3 className="text-2xl font-semibold mb-4 text-white group-hover:text-white transition-colors duration-300">
-                    What is Humanity&apos;s Story?
+                    {copy.insightStoryTitle}
                   </h3>
                   <p className="text-slate-300/80 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                    Uncover the fascinating history of our world, from the
-                    origins of human civilization to our modern global society.
+                    {copy.insightStoryBody}
                   </p>
                 </div>
               </div>
@@ -495,12 +495,10 @@ const HomePage = () => {
               <div className="group relative border border-transparent hover:border-blue-500 transition-all duration-300 rounded-xl">
                 <div className="relative p-8 rounded-xl bg-slate-900/50 backdrop-blur-sm group-hover:bg-slate-900 transition-all duration-300">
                   <h3 className="text-2xl font-semibold mb-4 text-white group-hover:text-white transition-colors duration-300">
-                    Who Was Jesus?
+                    {copy.insightJesusTitle}
                   </h3>
                   <p className="text-slate-300/80 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                    Experience a unique perspective on the life and teachings of
-                    Jesus, revealing the human story behind the historical
-                    figure.
+                    {copy.insightJesusBody}
                   </p>
                 </div>
               </div>
@@ -508,7 +506,7 @@ const HomePage = () => {
 
             {/* Attribution note */}
             <p className="text-center mt-16 text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              These topics represent the four major parts of the Urantia Papers.
+              {copy.insightsNote}
             </p>
 
             <div className="text-center mt-8">
@@ -518,7 +516,7 @@ const HomePage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                For Developers: Explore the Urantia Papers API
+                {copy.developersLink}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
@@ -551,14 +549,14 @@ const HomePage = () => {
         <section className="pt-24 pb-56 bg-gradient-to-b from-slate-900 to-slate-800">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-4xl md:text-5xl font-semibold mb-16 text-center text-white">
-              The Challenge of Studying the Papers
+              {copy.challengeHeading}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1">
                 <div className="relative h-96">
                   <Image
                     src="/homepage2.jpg"
-                    alt="Traditional book reading experience"
+                    alt={copy.challengeImageAlt}
                     fill
                     className="object-cover rounded-lg opacity-80"
                   />
@@ -567,7 +565,7 @@ const HomePage = () => {
               <div className="order-1 md:order-2">
                 <div className="space-y-6">
                   <p className="text-xl leading-relaxed text-slate-300">
-                    Traditional study methods present several key challenges:
+                    {copy.challengeLead}
                   </p>
                   <ul className="space-y-4">
                     <li className="flex items-start gap-3">
@@ -576,8 +574,7 @@ const HomePage = () => {
                         strokeWidth={1.5}
                       />
                       <p className="text-lg text-slate-300">
-                        2,000+ pages of complex concepts make comprehension
-                        difficult
+                        {copy.challengePages}
                       </p>
                     </li>
                     <li className="flex items-start gap-3">
@@ -586,7 +583,7 @@ const HomePage = () => {
                         strokeWidth={1.5}
                       />
                       <p className="text-lg text-slate-300">
-                        Hard to track progress and locate specific passages
+                        {copy.challengeProgress}
                       </p>
                     </li>
                     <li className="flex items-start gap-3">
@@ -595,7 +592,7 @@ const HomePage = () => {
                         strokeWidth={1.5}
                       />
                       <p className="text-lg text-slate-300">
-                        Limited note-taking and sharing capabilities
+                        {copy.challengeNotes}
                       </p>
                     </li>
                     <li className="flex items-start gap-3">
@@ -604,7 +601,7 @@ const HomePage = () => {
                         strokeWidth={1.5}
                       />
                       <p className="text-lg text-slate-300">
-                        No integrated study aids for complex topics
+                        {copy.challengeAids}
                       </p>
                     </li>
                   </ul>
@@ -661,12 +658,10 @@ const HomePage = () => {
 
           <div className="max-w-7xl mx-auto px-6 relative">
             <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-center text-white">
-              A Modern Reading Experience
+              {copy.modernHeading}
             </h2>
             <p className="text-xl text-center mb-16 max-w-3xl mx-auto text-emerald-50">
-              We&apos;ve reimagined how these timeless teachings can be accessed
-              and studied in the digital age, addressing traditional challenges
-              with innovative solutions:
+              {copy.modernBody}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -700,22 +695,22 @@ const HomePage = () => {
 
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-400 to-gray-900">
-              Community Hub
+              {copy.communityHeading}
             </h2>
             <p className="text-xl text-center mb-16 max-w-3xl mx-auto text-slate-600">
-              Share a passage, and see which passages other readers marked.
+              {copy.communityBody}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <CommunityFeature
                 icon={Share2}
-                title="Easy Sharing"
-                description="Share inspiring passages on social media or copy direct links to your favorite sections to discuss with friends."
+                title={copy.communityShare}
+                description={copy.communityShareBody}
               />
               <CommunityFeature
                 icon={Bookmark}
-                title="Popular Passages"
-                description="See which passages resonate most with other readers. Discover how many others found specific teachings meaningful and impactful."
+                title={copy.communityPopular}
+                description={copy.communityPopularBody}
               />
             </div>
           </div>
@@ -780,24 +775,24 @@ const HomePage = () => {
           {/* Content */}
           <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
             <h2 className="text-5xl md:text-7xl pb-2 font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200">
-              Start Reading
+              {copy.ctaHeading}
             </h2>
             <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed text-indigo-200">
-              Start with the Foreword, or pick any paper.
+              {copy.ctaBody}
             </p>
             <div className="inline-block p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-lg">
               <p className="text-indigo-200 px-4 sm:px-6 py-3 bg-indigo-900/50 backdrop-blur-sm rounded-lg text-sm sm:text-base whitespace-nowrap">
-                No account needed to read.
+                {copy.ctaBadge}
               </p>
             </div>
             <div className="mt-12">
               {status === "authenticated" && (
                 <TiltButton href={deriveReadLink(status)}>
-                  Continue Reading
+                  {copy.continueReading}
                 </TiltButton>
               )}
               {status === "unauthenticated" && (
-                <TiltButton href="/auth/sign-in">Create an Account</TiltButton>
+                <TiltButton href="/auth/sign-in">{copy.joinCommunity}</TiltButton>
               )}
             </div>
           </div>

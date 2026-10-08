@@ -2,9 +2,8 @@
  * api.urantia.dev calls for the Parallels pages: Urantia paragraphs with their closest
  * scripture and Bible passages, and scripture passages with their closest paragraphs.
  */
+import { resolveApiHost } from "./client";
 import type { ApiBibleParallel, ApiScriptureParallel } from "./types";
-
-const API_HOST = process.env.NEXT_PUBLIC_URANTIA_DEV_API_HOST;
 
 export type ApiCorpus = ApiScriptureParallel["corpus"] & {
   sourceUrl: string;
@@ -57,14 +56,19 @@ export type PassageWithParallels = {
 export class NotFoundError extends Error {}
 
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_HOST}${path}`);
+  const res = await fetch(`${resolveApiHost()}${path}`);
   if (res.status === 404 || res.status === 400) throw new NotFoundError(path);
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return (await res.json()) as T;
 }
 
 export async function fetchCorpora(): Promise<ApiCorpus[]> {
-  return (await getJson<{ data: ApiCorpus[] }>("/scriptures")).data;
+  try {
+    return (await getJson<{ data: ApiCorpus[] }>("/scriptures")).data;
+  } catch (err) {
+    if (err instanceof NotFoundError) return [];
+    throw err;
+  }
 }
 
 export async function fetchParagraphWithParallels(ref: string): Promise<ParagraphWithParallels> {
@@ -148,7 +152,7 @@ export type SearchResults = {
 /** Search by meaning in the Papers and in the scriptures, in parallel. Runs in the browser. */
 export async function searchParallels(q: string): Promise<SearchResults> {
   const post = (path: string, body: unknown) =>
-    fetch(`${API_HOST}${path}`, {
+    fetch(`${resolveApiHost()}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
