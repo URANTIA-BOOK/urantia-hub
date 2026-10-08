@@ -8,7 +8,10 @@ import type { ApiParagraph, ApiTocPart } from "./types";
 /**
  * Map a new API paragraph to the legacy UBNode shape.
  */
-export function mapParagraphToUBNode(p: ApiParagraph): UBNode {
+export function mapParagraphToUBNode(
+  p: ApiParagraph,
+  language = "eng"
+): UBNode {
   return {
     globalId: p.id,
     htmlText: p.htmlText,
@@ -22,7 +25,7 @@ export function mapParagraphToUBNode(p: ApiParagraph): UBNode {
     paperSectionId: `${p.paperId}.${p.sectionId ?? "0"}`,
     paperSectionParagraphId: `${p.paperId}.${p.sectionId ?? "0"}.${p.paragraphId}`,
     labels: p.labels ?? [],
-    language: "eng",
+    language,
     type: "paragraph",
     objectID: p.id,
   };

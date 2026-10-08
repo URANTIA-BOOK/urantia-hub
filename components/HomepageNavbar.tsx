@@ -3,7 +3,10 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import ReadingLanguageNav from "./ReadingLanguageNav";
 import LogoSymbol from "./LogoSymbol";
+import { useHasAuthProvider } from "@/hooks/useHasAuthProvider";
+import { useUiCopy } from "@/libs/uiCopy";
 import { deriveReadLink } from "@/utils/readPaperLink";
 import { MenuIcon } from "lucide-react";
 
@@ -14,6 +17,8 @@ const HomepageNavbar = ({
 }) => {
   // Hooks.
   const { status } = useSession();
+  const hasAuthProvider = useHasAuthProvider();
+  const copy = useUiCopy();
 
   // Router.
   const router = useRouter();
@@ -83,7 +88,7 @@ const HomepageNavbar = ({
       <header
         className={`flex flex-col items-center pt-4 pb-1 px-2 ${
           background === "bg-transparent" ? background : `pb-3 ${background}`
-        } text-white z-10`}
+        } text-white z-40`}
       >
         <div className="flex items-center justify-between w-full max-w-5xl pt-1 pb-2 px-2">
           <Link
@@ -96,15 +101,16 @@ const HomepageNavbar = ({
             </h1>
           </Link>
           <LogoSymbol className="flex-1 text-white h-6 w-6 md:h-8 md:w-8" />
-          <div className="flex-1 flex justify-end text-base">
+          <div className="flex flex-1 items-center justify-end gap-4 text-base">
+            <ReadingLanguageNav tone="hero" />
             {/* A plain anchor, not next/link: the href is an API route that 307s,
                 and a client-side transition to it renders the target page with
                 empty props. */}
             <a
-              className="text-center hover:no-underline mr-4 text-white hover:text-white/80 transition-colors duration-200"
+              className="text-center hover:no-underline text-white hover:text-white/80 transition-colors duration-200"
               href={continueReadingLink}
             >
-              Read
+              {copy.read}
             </a>
             {status === "authenticated" && (
               <Link
@@ -115,7 +121,7 @@ const HomepageNavbar = ({
                 <MenuIcon className="w-6 h-6" />
               </Link>
             )}
-            {status === "unauthenticated" && (
+            {status === "unauthenticated" && hasAuthProvider && (
               <button
                 className="border-0 p-0 bg-transparent text-right hover:no-underline text-white hover:text-white/80 transition-colors duration-200"
                 onClick={() => {
@@ -123,7 +129,7 @@ const HomepageNavbar = ({
                   onResetState();
                 }}
               >
-                Sign In
+                {copy.signIn}
               </button>
             )}
           </div>

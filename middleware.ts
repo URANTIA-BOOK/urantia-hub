@@ -24,18 +24,31 @@ function cleanup() {
   });
 }
 
-// Rate limit configuration by path prefix
+/**
+ * Session probes and the sign-in callback must not share a counter.
+ * The client polls session, csrf, and providers on every page; five of
+ * those in a minute used to reject the Google callback.
+ */
+export function rateLimitBucket(pathname: string): string | null {
+  if (
+    pathname.startsWith("/api/auth/session") ||
+    pathname.startsWith("/api/auth/csrf") ||
+    pathname.startsWith("/api/auth/providers")
+  ) {
+    return "/api/auth/probe";
+  }
+  if (pathname.startsWith("/api/auth")) return "/api/auth";
+  if (pathname.startsWith("/api/chat")) return "/api/chat";
+  if (pathname.startsWith("/api/")) return "/api";
+  return null;
+}
+
 function getRateLimit(pathname: string): { limit: number; windowMs: number } | null {
-  if (pathname.startsWith("/api/auth")) {
-    return { limit: 5, windowMs: 60_000 };
-  }
-  if (pathname.startsWith("/api/chat")) {
-    return { limit: 20, windowMs: 60_000 };
-  }
-  if (pathname.startsWith("/api/")) {
-    return { limit: 60, windowMs: 60_000 };
-  }
-  // Non-API paths — no rate limiting
+  const bucket = rateLimitBucket(pathname);
+  if (bucket === "/api/auth/probe") return { limit: 60, windowMs: 60_000 };
+  if (bucket === "/api/auth") return { limit: 5, windowMs: 60_000 };
+  if (bucket === "/api/chat") return { limit: 20, windowMs: 60_000 };
+  if (bucket === "/api") return { limit: 60, windowMs: 60_000 };
   return null;
 }
 
@@ -58,7 +71,9 @@ export function middleware(request: NextRequest) {
   cleanup();
 
   const ip = getClientIp(request);
-  const key = `${ip}:${pathname.startsWith("/api/auth") ? "/api/auth" : pathname.startsWith("/api/chat") ? "/api/chat" : "/api"}`;
+  const bucket = rateLimitBucket(pathname);
+  if (!bucket) return NextResponse.next();
+  const key = `${ip}:${bucket}`;
   const now = Date.now();
 
   let entry = rateLimitMap.get(key);

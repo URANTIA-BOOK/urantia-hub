@@ -35,4 +35,6 @@ const ErrorPage = () => {
   );
 };
 
+export { authOffReadRedirect as getServerSideProps } from "@/libs/authOffRedirect";
+
 export default ErrorPage;

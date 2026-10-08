@@ -8,7 +8,8 @@ import Footer from "@/components/Footer";
 import HeadTag from "@/components/HeadTag";
 import Navbar from "@/components/Navbar";
 import Spinner from "@/components/Spinner";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import { renderLeadingText } from "@/utils/renderNode";
 import { Bookmark } from "@prisma/client";
 import { Bookmark as BookmarkIcon, ChevronDownIcon, Heart } from "lucide-react";
@@ -16,6 +17,7 @@ import { Bookmark as BookmarkIcon, ChevronDownIcon, Heart } from "lucide-react";
 type BookmarkNode = Bookmark & UBNode;
 
 const BookmarksPage = () => {
+  const { language, source } = useReadingLanguage();
   // Session
   const { status } = useSession();
 
@@ -140,9 +142,12 @@ const BookmarksPage = () => {
                   {bookmarks.map((bookmark) => (
                     <Link
                       key={bookmark.id}
-                      href={`/papers/${paperIdToUrl(`${bookmark.paperId}`)}#${
-                        bookmark.globalId
-                      }`}
+                      href={paperHref(
+                        `${bookmark.paperId}`,
+                        bookmark.globalId,
+                        language,
+                        source
+                      )}
                       className="block p-4 hover:bg-gray-50 dark:hover:bg-zinc-800 transition duration-150 fade-in"
                     >
                       <div className="flex items-center justify-between mb-1 text-gray-400 dark:text-gray-500 text-xs">

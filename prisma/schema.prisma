@@ -215,6 +215,7 @@ model User {
   lastVisitedPaperId          String?
   lastVisitedPaperTitle       String?
   name                        String?
+  readingLanguage             String?   @map("reading_language")
   updatedAt                   DateTime  @updatedAt
 
   accounts      Account[]

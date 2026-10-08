@@ -10,13 +10,15 @@ import HeadTag from "@/components/HeadTag";
 import Navbar from "@/components/Navbar";
 import Spinner from "@/components/Spinner";
 import { renderLeadingText } from "@/utils/renderNode";
-import { paperIdToUrl } from "@/utils/paperFormatters";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 
 type Activity = UBNode &
   Bookmark &
   Note & { createdAt: string; noteText?: string };
 
 const MyLibrary = () => {
+  const { language, source } = useReadingLanguage();
   // Session.
   const { status } = useSession();
 
@@ -72,7 +74,7 @@ const MyLibrary = () => {
           <Link
             aria-label="View note"
             className="mb-6 text-left hover:no-underline note bg-white dark:bg-zinc-900 p-4 rounded hover:shadow-lg transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(`${node.paperId}`)}#${node.globalId}`}
+            href={paperHref(`${node.paperId}`, node.globalId, language, source)}
             id={node.createdAt}
             key={index}
           >
@@ -112,7 +114,7 @@ const MyLibrary = () => {
           <Link
             aria-label="View bookmark"
             className="mb-6 text-left hover:no-underline bookmark bg-white dark:bg-zinc-900 p-4 rounded hover:shadow-lg transition duration-300 ease-in-out"
-            href={`/papers/${paperIdToUrl(`${node.paperId}`)}#${node.globalId}`}
+            href={paperHref(`${node.paperId}`, node.globalId, language, source)}
             id={node.createdAt}
             key={index}
           >
