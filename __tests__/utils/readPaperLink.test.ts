@@ -23,4 +23,40 @@ describe("deriveSignedOutReadButton", () => {
       "/papers/foreword"
     );
   });
+
+  it("carries a Spanish edition on the Foreword", () => {
+    expect(deriveSignedOutReadButton(null, "es")).toEqual({
+      href: "/papers/foreword?lang=es",
+      label: "Start Reading",
+    });
+  });
+
+  it("carries a Spanish edition and source on the Foreword", () => {
+    expect(deriveSignedOutReadButton(null, "es", "spa-1993")).toEqual({
+      href: "/papers/foreword?lang=es&source=spa-1993",
+      label: "Start Reading",
+    });
+  });
+
+  it("carries a Spanish edition on a saved place", () => {
+    expect(
+      deriveSignedOutReadButton({ paperId: "2", globalId: "1:2.5.1" }, "es")
+    ).toEqual({
+      href: "/api/redirect/user/read?paperId=2&globalId=1:2.5.1&lang=es",
+      label: "Continue Reading",
+    });
+  });
+
+  it("carries a Spanish edition and source on a saved place", () => {
+    expect(
+      deriveSignedOutReadButton(
+        { paperId: "2", globalId: "1:2.5.1" },
+        "es",
+        "spa-1993"
+      )
+    ).toEqual({
+      href: "/api/redirect/user/read?paperId=2&globalId=1:2.5.1&lang=es&source=spa-1993",
+      label: "Continue Reading",
+    });
+  });
 });

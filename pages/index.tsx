@@ -11,6 +11,7 @@ import HeadTag from "@/components/HeadTag";
 import HomepageNavbar from "@/components/HomepageNavbar";
 import ParticleBackground from "@/components/ParticleBackground";
 import TiltButton from "@/components/TiltButton";
+import { useReadingLanguage } from "@/context/readingLanguage";
 import { useUiCopy } from "@/libs/uiCopy";
 import {
   deriveReadLink,
@@ -33,6 +34,7 @@ import CommunityFeature from "@/components/HomepageCommunityFeature";
 const HomePage = () => {
   // Hooks.
   const { status } = useSession();
+  const { language, source } = useReadingLanguage();
   const copy = useUiCopy();
   const modernFeatures = useModernFeatures();
   const searchParams = useSearchParams();
@@ -41,7 +43,11 @@ const HomePage = () => {
   const [lastVisitedNode, setLastVisitedNode] =
     useState<LastVisitedNode | null>(null);
   const [showDownButton, setShowDownButton] = useState<boolean>(true);
-  const signedOutReadButton = deriveSignedOutReadButton(lastVisitedNode);
+  const signedOutReadButton = deriveSignedOutReadButton(
+    lastVisitedNode,
+    language,
+    source
+  );
 
   const fetchLastVisitedNode = async () => {
     try {

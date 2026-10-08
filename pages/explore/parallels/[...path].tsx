@@ -11,6 +11,8 @@ import ParallelsNote from "@/components/parallels/ParallelsNote";
 import PassageCard from "@/components/parallels/PassageCard";
 import Trail from "@/components/parallels/Trail";
 import { track } from "@/libs/analytics";
+import { useReadingLanguage } from "@/context/readingLanguage";
+import { paperHref } from "@/libs/readingFlow";
 import {
   NotFoundError,
   fetchParagraphWithParallels,
@@ -18,7 +20,6 @@ import {
   type ParagraphWithParallels,
   type PassageWithParallels,
 } from "@/libs/urantiaApi/parallels";
-import { paperIdToUrl } from "@/utils/paperFormatters";
 import {
   PARALLELS_ROOT,
   bibleRefFromChunkId,
@@ -87,6 +88,7 @@ const ScoreLine = ({ scores }: { scores: NonNullable<ParagraphWithParallels["scr
 };
 
 const CompareView = ({ paragraph: p }: { paragraph: ParagraphWithParallels }) => {
+  const { language, source } = useReadingLanguage();
   const groups = compareGroups(p);
   const [selected, setSelected] = useState(groups[0]?.id ?? "");
   const [expanded, setExpanded] = useState(false);
@@ -124,7 +126,7 @@ const CompareView = ({ paragraph: p }: { paragraph: ParagraphWithParallels }) =>
           >
             {expanded ? "Show less" : "Read all"}
           </button>
-          <Link href={`/papers/${paperIdToUrl(p.paperId)}#${p.id}`} className="text-sky-600 dark:text-sky-400">
+          <Link href={paperHref(p.paperId, p.id, language, source)} className="text-sky-600 dark:text-sky-400">
             Read in context
           </Link>
         </div>

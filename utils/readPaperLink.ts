@@ -1,3 +1,4 @@
+import { paperHref, withEdition } from "@/libs/readingFlow";
 import { editionQuery } from "@/libs/urantiaApi/client";
 import {
   readStoredReadingLanguage,
@@ -52,14 +53,20 @@ type SavedPlace = { paperId?: string | null; globalId?: string | null } | null;
 
 // The hero button for a signed-out reader: the saved place, or the Foreword.
 export const deriveSignedOutReadButton = (
-  savedPlace: SavedPlace
+  savedPlace: SavedPlace,
+  lang?: string | null,
+  source?: string | null
 ): { href: string; label: string } => {
   if (savedPlace?.paperId && savedPlace?.globalId) {
     return {
-      href: `/api/redirect/user/read?paperId=${savedPlace.paperId}&globalId=${savedPlace.globalId}`,
+      href: withEdition(
+        `/api/redirect/user/read?paperId=${savedPlace.paperId}&globalId=${savedPlace.globalId}`,
+        lang,
+        source
+      ),
       label: "Continue Reading",
     };
   }
 
-  return { href: "/papers/foreword", label: "Start Reading" };
+  return { href: paperHref("0", null, lang, source), label: "Start Reading" };
 };

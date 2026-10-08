@@ -7,11 +7,9 @@ import { localeKeys } from "./uiCopy";
 
 describe("landing copy", () => {
   it("uses the homepage sentences from this snapshot", () => {
-    expect(eng.heroTitle).toBe(
-      "Revolutionary Ideas for Life's Biggest Questions"
-    );
+    expect(eng.heroTitle).toBe("Read the Urantia Papers");
     expect(eng.insightJesusTitle).toBe("Who Was Jesus?");
-    expect(eng.papersBody).toContain("celestial beings");
+    expect(eng.papersBody).toContain("197 papers, including the Foreword");
   });
 
   it("keeps the same keys in Spanish, French, and German", () => {
